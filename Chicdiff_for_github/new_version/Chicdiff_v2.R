@@ -1,3 +1,18 @@
+#' Default CHiCAGO settings
+#'
+#' A function that gives the default settings used for a CHiCAGO experiment.
+#'
+#' @param rmapfile Default: NA. The location of the restriction map file; see the vignette for a description of what this file should contain.
+#' @param baitmapfile Default: NA. The location of the bait map file; see the vignette for a description of what this file should contain.
+#' @param RUmergeMode Default: "window". Manner to expand in ("window" or "union")
+#' @param RUexpand Default: 5L. Number of fragments to expand by in either direction
+#' @param score Default: 5. Filtering score for the contacts.
+#' @param saveRDS Default: FALSE. If 'TRUE' (and without any other precisions from the part of every function) every function of the pipeline will save the output as a (heavy) Rds file.
+#' @param printMemory Default: TRUE. IF TRUE -> GC=TRUE - attempt to reclaim garbage, or memory occupied by objects that are no longer in use by the program
+#'
+#' @export
+
+
 ## Settings functions -----------------
  
 defaultchicSettings <- function()
@@ -8,7 +23,7 @@ defaultchicSettings <- function()
      RUmergeMode= "window", #manner to expand in ("window" or "union")
      RUexpand= 5L, #number of fragments to expand by in either direction
      score= 5, #Give more informative name (see getRegionUniverse())
-     saveRDS = TRUE,
+     saveRDS = FALSE,
      printMemory = TRUE
    )
  }
@@ -107,19 +122,19 @@ setchicExperiment = function(designDir="", settings=list(), settingsFile=setting
 
 #-------------------------------Auxilliary functions-----------------------------------------------#
 
-multmerge = function(peakfiles)
-{
-  datalist = lapply(peakfiles, function(x){fread(file=x,header=T)})
-  peakMatrix = Reduce(function(x,y) {merge(x,y)}, datalist)
-  peakMatrix
-}
+# multmerge = function(peakfiles)
+# {
+#   datalist = lapply(peakfiles, function(x){fread(file=x,header=T)})
+#   peakMatrix = Reduce(function(x,y) {merge(x,y)}, datalist)
+#   peakMatrix
+# }
 
 readAndFilterPeakMatrix <- function(peakMatrix, targetColumns = c(), score = 5){
 ## Essentially reads in the peak matrix, taking the target columns if specified (else just takes everything) and filters for rows where at least
 ##one score is > 5 (or whatever is specified) and filters out trans interactions. 
   if(length(targetColumns) != 0){  
     if(length(targetColumns) == length(targetRDSorRDAFiles)){
-      peakMatrix = multimerge(peakfiles=peakfiles)
+      # peakMatrix = multimerge(peakfiles=peakfiles)
       suppressWarnings(x <- fread(peakMatrix)) #Suppressing an irrelevant warning - but probably a good idea to not do this just in case
       sel <- which(colnames(x) %in% targetColumns)
       x <- x[,c(1:11, sel), with=FALSE]
@@ -176,26 +191,26 @@ chicdiffPipeline <- function(defchic.settings, peakMatrix, targetChFiles, target
   printMemory = defchic.settings[["printMemory"]]
 
   message("\n*** Running getRegionUniverse\n")
-  RU <- getRegionUniverse(RUmergeMode = "window", RUexpand = 5L, rmapfile = rmapfile, peakMatrix = peakMatrix, targetColumns = targetColumns, score = 5, saveRDS = TRUE)  
+  RU <- getRegionUniverse(RUmergeMode = "window", RUexpand = 5L, rmapfile = rmapfile, peakMatrix = peakMatrix, targetColumns = targetColumns, score = 5, saveRDS = FALSE)  
   printMemoryFunction(printMemory)
 
   
   message("\n*** Running getControlRegionUniverse\n")
-  RUcontrol <- getControlRegionUniverse(RU, rmapfile = rmapfile, baitmapfile = baitmapfile, saveRDS = TRUE)
+  RUcontrol <- getControlRegionUniverse(RU, rmapfile = rmapfile, baitmapfile = baitmapfile, saveRDS = FALSE)
   printMemoryFunction(printMemory)
 
   message("\n*** Running getFullRegionData2\n")
-  FullRegionData <- getFullRegionData2(RU, RUcontrol, targetChFiles = targetChFiles, targetRDSorRDAFiles = targetRDSorRDAFiles, targetRDSorRDAs = targetRDSorRDAs, rmapfile = rmapfile, saveRDS = TRUE, suffix = "")
+  FullRegionData <- getFullRegionData2(RU, RUcontrol, targetChFiles = targetChFiles, targetRDSorRDAFiles = targetRDSorRDAFiles, targetRDSorRDAs = targetRDSorRDAs, rmapfile = rmapfile, saveRDS = FALSE, suffix = "")
   printMemoryFunction(printMemory)
 
   message("\n*** Running DESeq2Wrap for FullRegion\n")
-  FullRegion = FullRegionData[[1]]
-  DESeqOut <- DESeq2Wrap(RU, FullRegion, rmapfile = rmapfile, saveRDS = TRUE)
+  FullRegion <- FullRegionData[[1]]
+  DESeqOut <- DESeq2Wrap(RU, FullRegion, rmapfile = rmapfile, saveRDS = FALSE)
   printMemoryFunction(printMemory)
 
   message("\n*** Running DESeq2Wrap for FullControlRegion\n")
-  FullControlRegion = FullRegionData[[2]]
-  DESeqOutControl <- DESeq2Wrap(RUcontrol, FullControlRegion, rmapfile = rmapfile, saveRDS = TRUE, suffix = "Control") # could just put this into a tiny wrapper which does both
+  FullControlRegion <- FullRegionData[[2]]
+  DESeqOutControl <- DESeq2Wrap(RUcontrol, FullControlRegion, rmapfile = rmapfile, saveRDS = FALSE, suffix = "Control") # could just put this into a tiny wrapper which does both
   printMemoryFunction(printMemory)
 
   message("\n*** Running IHWcorrection\n")
@@ -443,7 +458,8 @@ getControlRegionUniverse <- function(RU, rmapfile = rmapfile, baitmapfile = bait
 
 readRDSorRDA <- function(file){
   
-  suppressWarnings(tmp <- try(load(file), silent = TRUE))
+  tmpEnv <- new.env()
+  suppressWarnings(tmp <- try(load(file, envir = tmpEnv), silent = TRUE))
   if("try-error" %in% class(tmp)){
     #message("Not an RDA. Checking whether RDS.")
     suppressWarnings(tmp <- try(output <- readRDS(file), silent = TRUE))
@@ -455,7 +471,7 @@ readRDSorRDA <- function(file){
     }
   } else{
     #message("Detected RDA")
-    eval(parse(text = get(ls()[ls() != "file"])))
+    get(ls(envir=tmpEnv)[1], envir=tmpEnv)
   }
 }
 
@@ -641,7 +657,8 @@ getFullRegionData2 <- function(RU, RUcontrol, targetChFiles = targetChFiles, tar
     setkey(out, baitID, otherEndID)
     
     outControl <- Chicago:::.estimateBMean(outControl, distFunParams)
-    outControl[is.na(s_j),Bmean:=NA]
+    outControl[is.na(s_j),Bmean:=NA]ΩΩ
+    
     setkey(outControl, baitID, otherEndID)
     
     outData[[i]] <- out
@@ -657,7 +674,6 @@ getFullRegionData2 <- function(RU, RUcontrol, targetChFiles = targetChFiles, tar
       rm(x)
     }
   }
-
 
   # outData, outDataControl and dispersions are our useful outputs from this part above  
 
@@ -728,15 +744,15 @@ getFullRegionData2 <- function(RU, RUcontrol, targetChFiles = targetChFiles, tar
 
     for(i in 1:length(countData))
   {
-    #message(i, "\n")
     x <- fread(targetChFiles[i])
     setkey(x, baitID)
-    #message(key(x), " ")
+
     y <- x[J(baitsControl),]
     x <- x[J(baits),]
+    
     setkey(x, baitID) 
     setkey(y, baitID)
-    #message(key(x), " \n")
+    
     countData[[i]] <- x
     countDataControl[[i]] <- y
     rm(x)
@@ -764,7 +780,7 @@ getFullRegionData2 <- function(RU, RUcontrol, targetChFiles = targetChFiles, tar
   for(i in 1:length(countDataControl))
    {
     columnName <- paste0("N.", names(targetChFiles)[i])
-    temp <- countData[[i]][,c("baitID","otherEndID","N"), with=FALSE]
+    temp <- countDataControl[[i]][,c("baitID","otherEndID","N"), with=FALSE]
     setkey(temp, baitID, otherEndID)
     CountOutControl <- merge(CountOutControl, temp, all.x=TRUE)
     
@@ -875,15 +891,8 @@ getFullRegionData2 <- function(RU, RUcontrol, targetChFiles = targetChFiles, tar
     saveRDS(recastControl, paste0("./FullControlRegionData", suffix, ".Rds"))
   }
   #### Don't really know what would be the best output for this - so as a place holder I am doing the following:
- 
-  message(paste0("recast class\t", class(recast), "...\n"))
-  message(paste0("recastControl class\t", class(recastControl), "...\n"))
 
   FullRegionDatalist <- list(recast, recastControl)
-
-  message(paste0("FullRegionDatalistst class\t", class(FullRegionDatalist), "...", "recast class\t", class(FullRegionDatalist[[2]]), "...\n"))
-  message(paste0("FullRegionDatalistst[[1]] class\t", class(FullRegionDatalist[[1]]), "...", "FullRegionDatalistst[[2]] class\t", class(FullRegionDatalist[[2]]), "...\n"))
-
   FullRegionDatalist
 
 }
