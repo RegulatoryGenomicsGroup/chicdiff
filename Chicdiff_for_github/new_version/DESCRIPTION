@@ -1,0 +1,11 @@
+Package: Chicdiff
+Version: 0.1
+Date: 2018-09-10
+Title: CHiCdiff: Capture Hi-C Differential Signal Detection
+Author: Jonathan Cairns, William Orchard, Valeriya Malysheva, Mikhail Spivakov
+Maintainer: Mikhail Spivakov <mikhail.spivakov@lms.mrc.ac.uk>
+Description: A pipeline for differential analysis of Capture Hi-C data
+Depends: R (>= 3.3.0), data.table
+Imports: Chicago, IRanges, DESeq2, IHW
+Suggets: ggplot2, cowplot, hexbin, argparser, testthat
+LazyData: true
