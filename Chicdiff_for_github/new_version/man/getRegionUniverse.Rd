@@ -8,7 +8,7 @@ Get Region Universe.
 Filters contacts by score, so that at least one replicate has the score higher than the threshold. It then expands the otherend (seed) by s (RUexpand) in both direction (if possible) to get "region universe". 
 }
 \usage{
-  RU <- getRegionUniverse(defchic.settings)  
+getRegionUniverse(defchic.settings)  
 }
 
 \arguments{

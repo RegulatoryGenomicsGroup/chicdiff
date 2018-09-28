@@ -10,7 +10,7 @@ If parallel = TRUE, reads in targetRDSorRDAs files only once for both "control" 
 Parallel mode is faster, but requires more memory.
 }
 \usage{
-FullRegionData <- getFullRegionData(defchic.settings, RU, RUcontrol, suffix = "")
+getFullRegionData(defchic.settings, RU, RUcontrol, suffix = "")
 }
 
 \arguments{
