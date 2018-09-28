@@ -1,0 +1,42 @@
+\name{getFullRegionData1}
+\alias{getFullRegionData1}
+
+\title{
+Get Full Region Data (non-parallel version)
+}
+\description{
+Recovers the full data for every region - contact from targetRDSorRDAs and chinput files.
+}
+\usage{
+FullRegionData <- getFullRegionData1(defchic.settings, RU, is_control = FALSE, suffix = "")
+}
+
+\arguments{
+  \item{defchic.settings} {settings that were set up by running \code{\link{setchicExperiment}}}
+  \item{RU} {Region Universe set up by running \code{\link{getRegionUniverse}}}
+  \item{is_control} {is the data provided - RU or RU control? FALSE by default}}}
+  \item{suffix} {Optional: suffix to add to the name of the saved files}}
+}
+
+\value{
+  \item{FullregionData} {a list of 3 elements: [[1]] - FullRegionData for RU, [[2]] - FullRegionData for RUcontrol, [[3]] - countput, containing data for plotting}
+  \item{countput.Rds} {countput, containing data for plotting}
+  \item{FullRegionData.Rds} { FullRegionData for RU, if saveRDS is TRUE}
+}
+
+\author{
+Jonathan Cairns, Will Orchard, Valeriya Malysheva and Mikhail Spivakov
+}
+
+\seealso{
+  \code{\link{setchicExperiment}}, \code{\link{getRegionUniverse}}
+}
+\examples{
+defchic.settings <- setchicExperiment(designDir="path/to/DesignDir", settingsFile = "path/to/settingsFile")
+RU <- getRegionUniverse(defchic.settings)
+RUcontrol <- getControlRegionUniverse3(defchic.settings, RU)
+FullRegionData <- getFullRegionData1(defchic.settings = defchic.settings, RU = RU, is_control = FALSE, suffix = "")
+FullRegionData[[2]] <- getFullRegionData1(defchic.settings = defchic.settings, RU = RUcontrol, is_control = TRUE, suffix = "")
+    
+}
+
