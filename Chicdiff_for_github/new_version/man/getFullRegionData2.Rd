@@ -20,7 +20,8 @@ getFullRegionData2(defchic.settings, RU, RUcontrol, suffix = "")
 \value{
   \item{FullregionData} {a list of 3 elements: [[1]] - FullRegionData for RU, [[2]] - FullRegionData for RUcontrol, [[3]] - countput, containing data for plotting}
   \item{countput.Rds} {countput, containing data for plotting}
-  \item{FullRegionData.Rds} { FullRegionData for RU, if saveRDS is TRUE}
+  \item{FullRegionData.Rds} {FullRegionData for RU, if saveRDS is TRUE}
+  \item{FullControlRegionData.Rds} {FullControlRegionData for RUcontrol, if saveRDS is TRUE}
 }
 
 \author{
@@ -32,8 +33,11 @@ Jonathan Cairns, Will Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 \examples{
 defchic.settings <- setchicExperiment(designDir="path/to/DesignDir", settingsFile = "path/to/settingsFile")
+ 
 RU <- getRegionUniverse(defchic.settings)
+
 RUcontrol <- getControlRegionUniverse3(defchic.settings, RU)
+ 
 FullRegionData <- getFullRegionData2(defchic.settings = defchic.settings, RU = RU, RUcontrol = RUcontrol, suffix = "")
 }
 

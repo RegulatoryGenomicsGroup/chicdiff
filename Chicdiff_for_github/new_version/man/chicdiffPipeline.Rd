@@ -55,6 +55,7 @@ This pipeline runs the following functions in order:
 }
 \examples{
 defchic.settings <- setchicExperiment(designDir = designDir, targetColumns = targetColumns, targetRDSorRDAs = targetRDSorRDAs, targetChs = targetChs, peakfiles = peakFiles, settings = list(parallel = TRUE))
+
 output <- chicdiffPipeline(defchic.settings)
 }
 

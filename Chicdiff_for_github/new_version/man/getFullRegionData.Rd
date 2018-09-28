@@ -37,8 +37,11 @@ Jonathan Cairns, Will Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 \examples{
 defchic.settings <- setchicExperiment(designDir="path/to/DesignDir", settingsFile = "path/to/settingsFile")
+
 RU <- getRegionUniverse(defchic.settings)
+
 RUcontrol <- getControlRegionUniverse3(defchic.settings, RU)
+
 FullRegionData <- getFullRegionData(defchic.settings, RU, RUcontrol, suffix = "")
 }
 
