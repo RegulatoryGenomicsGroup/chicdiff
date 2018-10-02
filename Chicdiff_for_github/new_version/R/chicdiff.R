@@ -158,6 +158,24 @@ setchicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
 
 # ----------
 
+.getTargetColumns <- function(targetRDSorRDAs){
+  
+  conditions <- names(targetRDSorRDAs)
+  targetColumns <- vector("list", length(conditions))
+  for(i in seq_along(conditions)){
+    temp <- conditions[[i]]
+    targetColumns[[i]] <- names(targetRDSorRDAs[[temp]])
+  }
+  targetColumns <- unlist(targetColumns)
+  if(is.null(targetColumns)){
+    targetColumns <- conditions
+  } 
+  okay = (length(targetColumns) == length(conditions) | length(targetColumns) == length(unlist(targetRDSorRDAs)))
+  if(!okay){ stop("Peak file columns incorrectly specified") }
+  
+  targetColumns
+}
+
 .strsplit_unlist <- function(x){
   temp <- strsplit(x, split= ",")
   unlist(temp)
@@ -188,7 +206,7 @@ setchicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
   peakMatrix
 }
 
-readAndFilterPeakMatrix <- function(peakFiles, targetColumns, score){
+readAndFilterPeakMatrix <- function(peakFiles, targetColumns, conditions, score){
 ## Essentially reads in the peak matrix, taking the target columns if specified (else just takes everything) and filters for rows where at least
 ##one score is > 5 (or whatever is specified) and filters out trans interactions. 
       if(length(peakFiles > 1)){
@@ -204,8 +222,6 @@ readAndFilterPeakMatrix <- function(peakFiles, targetColumns, score){
         sel <- sel | x[,get(cl) > score & !is.na(get(cl))] ##Get any rows where at least one score > 5.
       }
       x <- x[sel,]
-      
-      conditions <- names(targetRDSorRDAs)
       
       if(length(targetColumns) > length(conditions)){
         
@@ -304,7 +320,9 @@ getRegionUniverse <- function(defchic.settings, suffix = ""){
   score = defchic.settings[["score"]]
   saveRDS = defchic.settings[["saveRDS"]]
   
-  x <- readAndFilterPeakMatrix(peakFiles = peakFiles, score = score, targetColumns = targetColumns)
+  conditions <- names(targetRDSorRDAs)
+  
+  x <- readAndFilterPeakMatrix(peakFiles = peakFiles, score = score, targetColumns = targetColumns, conditions = conditions)
   
   ## Expand the "point universe" to get "region universe" by "window" mode------------------
  
@@ -1093,13 +1111,12 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
   
   targetChs = defchic.settings[["targetChs"]]
   targetRDSorRDAs = defchic.settings[["targetRDSorRDAs"]]
+  targetColumns = defchic.settings[["targetColumns"]]
   rmapfile = defchic.settings[["rmapfile"]]
   saveRDS = defchic.settings[["saveRDS"]]
      
   targetRDSorRDAFiles <- unlist(targetRDSorRDAs)
   targetChFiles <- unlist(targetChs)
-  
-  targetColumns <- names(targetRDSorRDAs)
   
   ## a.k.a. 03getInteractionParameters.R  
     
