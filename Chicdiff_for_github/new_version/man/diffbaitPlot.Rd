@@ -12,13 +12,13 @@ plotdiffBaits(output, countput, baitmapfile, n = 3, baits = NULL, plotBaitNames 
 }
 
 \arguments{
-  \item{output} {final output of IHW function, containing all the information about the bait - other end - region: coordinates, counts, log2FoldChange, DESeq pvalue, weight and weighted pvalue).}
+  \item{output} {final output of IHW function, containing all the information about the bait - other end - region: coordinates, counts, log2FoldChange, DESeq pvalue, weight and weighted pvalue and lots of other data.}
   
   \item{countput} {countput file, containing counts recovered from the .Rda Chicago files, produced in  \code{\link{getFullRegionData1}} or \code{\link{getFullRegionData2}}.}
 
   \item{baitmapfile} {The location of the bait map file. Recovered from defchic.settings, produced by  \code{\link{setchicExperiment}}.}
 
-  \item{n} {The number of baits to plot (ignored if \code{baits} is specified).}
+  \item{n} {The number of baits to plot (ignored if \code{baits} is specified). The differential landscape of n random unique baits will be displayed.}
 
   \item{baits} {The IDs of particular baits to plot.}
 
