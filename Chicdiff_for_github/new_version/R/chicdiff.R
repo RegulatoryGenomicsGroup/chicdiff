@@ -23,7 +23,7 @@ defaultchicSettings <- function()
 ### settings override settings from settingsFile
 ### both override defchic.settings
 
-setchicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA, peakfiles = NA, targetColumns = NA, settings=list(), settingsFile=NULL, inputfiles = NA,
+setchicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA, peakfiles = NA, settings=list(), settingsFile=NULL, inputfiles = NA,
                              defchic.settings=defaultchicSettings())
 {
   
@@ -31,12 +31,12 @@ setchicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
   {
     stop("Design not specified. Please specify a design directory or design files.")
   }
-  defchic.settings = .updatechicSettings(designDir, targetRDSorRDAs, targetChs, targetColumns, peakfiles, 
+  defchic.settings = .updatechicSettings(designDir, targetRDSorRDAs, targetChs, peakfiles, 
                                          settings, settingsFile, inputfiles, defchic.settings)
   
 }
 
-.updatechicSettings = function(designDir, targetRDSorRDAs, targetChs, targetColumns, peakfiles, 
+.updatechicSettings = function(designDir, targetRDSorRDAs, targetChs, peakfiles, 
                                settings, settingsFile, inputfiles, defchic.settings, updateDesign=FALSE){
   modSettings = vector("list")
   
@@ -95,7 +95,7 @@ setchicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
   }
   
   if(!is.na(inputfiles)){
-    input_lists <- makeTargetFilesList(inputfiles)
+    input_lists <- .makeTargetFilesList(inputfiles)
     targetRDSorRDAs <- input_lists[[1]]
     targetChs <- input_lists[[2]]
   }
@@ -108,17 +108,15 @@ setchicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
       stop(paste("No peak files found at the specified location", defchic.settings[["peakfiles"]]))
   }
   
-  defchic.settings[["targetColumns"]] = targetColumns
-  peakfile_columns <- colnames(multimerge(peakfiles))
+  defchic.settings[["targetColumns"]] = .getTargetColumns(targetRDSorRDAs)
+  peakfile_columns <- colnames(.multimerge(peakfiles))
   
-  if(is.na(defchic.settings[["targetColumns"]])){
-    warning("No target columns provided, will take all columns from the peak matrix")
-  } else if(!all(targetColumns %in% peakfile_columns)){
-    stop("All target columns must be present in the peak files")  
+  if(!all(targetColumns %in% peakfile_columns)){
+    stop("All specified columns must be present in the peak files")  
   }
 
   if(is.na(defchic.settings[["baitmapfile"]]) | (updateDesign & !is.null(designDir))){
-    defchic.settings[["baitmapfile"]] = locateFile("<baitmapfile>.baitmap", designDir, "\\.baitmap$")
+    defchic.settings[["baitmapfile"]] = .locateFile("<baitmapfile>.baitmap", designDir, "\\.baitmap$")
   }else{
     if (!file.exists(defchic.settings[["baitmapfile"]])){
       stop(paste("No baitmap file found at the specified location", defchic.settings[["baitmapfile"]]))
@@ -126,7 +124,7 @@ setchicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
   }
   
   if(is.na(defchic.settings[["rmapfile"]]) | (updateDesign & !is.null(designDir))){
-    defchic.settings[["rmapfile"]] = locateFile("<rmapfile>.rmap", designDir, "\\.rmap$")
+    defchic.settings[["rmapfile"]] = .locateFile("<rmapfile>.rmap", designDir, "\\.rmap$")
   }else{
     if (!file.exists(defchic.settings[["rmapfile"]])){
       stop(paste("No rmap file found at the specified location", defchic.settings[["rmapfile"]]))
@@ -160,12 +158,12 @@ setchicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
 
 # ----------
 
-strsplit_unlist <- function(x){
+.strsplit_unlist <- function(x){
   temp <- strsplit(x, split= ",")
   unlist(temp)
 }
 
-makeTargetFilesList <- function(config){
+.makeTargetFilesList <- function(config){
   temp <- fread(config, header = FALSE)
   temp_1 <- temp[, paste(V2, collapse = ","), by = V1]
   temp_2 <- temp[, paste(V3, collapse = ","), by = V1]
@@ -173,8 +171,8 @@ makeTargetFilesList <- function(config){
   names(temp_1) <- c("condition", "files")
   names(temp_2) <- c("condition", "files")
   
-  temp_1_2 <- lapply(temp_1[,files], strsplit_unlist)
-  temp_2 <- lapply(temp_2[,files], strsplit_unlist)
+  temp_1_2 <- lapply(temp_1[,files], .strsplit_unlist)
+  temp_2 <- lapply(temp_2[,files], .strsplit_unlist)
   
   names(temp_1_2) <- temp_1[, condition]
   names(temp_2) <- temp_1[, condition]
@@ -183,7 +181,7 @@ makeTargetFilesList <- function(config){
 
 #-------------------------------Auxilliary functions-----------------------------------------------#
 
-multimerge <- function(peakFiles)
+.multimerge <- function(peakFiles)
 {
   templist <- lapply(peakFiles, fread)
   peakMatrix <- Reduce(merge, templist)
@@ -193,9 +191,8 @@ multimerge <- function(peakFiles)
 readAndFilterPeakMatrix <- function(peakFiles, targetColumns, score){
 ## Essentially reads in the peak matrix, taking the target columns if specified (else just takes everything) and filters for rows where at least
 ##one score is > 5 (or whatever is specified) and filters out trans interactions. 
-  if(!is.na(targetColumns)){  
       if(length(peakFiles > 1)){
-        x <- multimerge(peakFiles)
+        x <- .multimerge(peakFiles)
       } else {
         x <- fread(peakFiles)
       }
@@ -208,33 +205,32 @@ readAndFilterPeakMatrix <- function(peakFiles, targetColumns, score){
       }
       x <- x[sel,]
       
-      sel2 <- which(rowSums(x[,!is.na(.SD[,targetColumns, with = FALSE])]) >= 2) ##Remove any rows whe all but one of the conditions has a score of NA
-      x <- x[sel2]
+      conditions <- names(targetRDSorRDAs)
       
-    } else{
-    if(length(peakFiles > 1)){
-      x <- multimerge(peakFiles)
-    } else {
-      x <- fread(peakFiles)
-    }
-    sel <- rep(FALSE, nrow(x))
-    for(cl in c(12:length(x)))
-    {
-      sel <- sel | x[,get(colnames(x)[cl]) > score & !is.na(get(colnames(x)[cl]))] #This might be the stupidest way I could have fixed a problem 
-    }
-    x <- x[sel,] ##Get any rows where at least one score > 5.
-  }
+      if(length(targetColumns) > length(conditions)){
+        
+        sel2 <- rep(TRUE, nrow(x))
+        for(i in seq_along(conditions)){
+          temp <- conditions[[i]]
+          cols <- colnames(x)[colnames(x) %in% names(targetRDSorRDAs[[temp]])]
+          
+          sel2 <- sel2 & rowSums(x[,!is.na(.SD[,cols, with = FALSE])]) >= 2 ##Remove any rows where there isn't at least 2 replicates for each condition with non-NA values
+        } 
+        
+        x <- x[sel2]
+      }
+  
   x <- x[!is.na(dist),] ## <- FILTER OUT TRANS INTERACTIONS - Assumed in (*)
 
 }
 
-printMemoryFunction <- function(printMemory){
+.printMemoryFunction <- function(printMemory){
   if(printMemory == TRUE){
     print(gc(reset=TRUE))
   }
 }
 
-locateFile = function(what, where, pattern){
+.locateFile = function(what, where, pattern){
   message("Locating ", what, " in ", where, "...")
   filename = list.files(where, pattern)
   
@@ -255,33 +251,21 @@ chicdiffPipeline <- function(defchic.settings, outprefix=NULL, printMemory=TRUE)
   
   message("\n*** Running getRegionUniverse\n")
   RU <- getRegionUniverse(defchic.settings)  
-  printMemoryFunction(printMemory)
-  print(mem_used())
   
   message("\n*** Running getControlRegionUniverse\n")
   RUcontrol <- getControlRegionUniverse3(defchic.settings, RU)
-  printMemoryFunction(printMemory)
-  print(mem_used())
 
   message("\n*** Running getFullRegionData\n")
   FullRegionData <- getFullRegionData(defchic.settings, RU, RUcontrol, suffix = "")
-  printMemoryFunction(printMemory)
-  print(mem_used())
 
   message("\n*** Running DESeq2Wrap for FullRegion\n")
   DESeqOut <- DESeq2Wrap(defchic.settings, RU, FullRegionData[[1]])
-  printMemoryFunction(printMemory)
-  print(mem_used())
 
   message("\n*** Running DESeq2Wrap for FullControlRegion\n")
   DESeqOutControl <- DESeq2Wrap(defchic.settings, RUcontrol, FullRegionData[[2]], suffix = "Control") 
-  printMemoryFunction(printMemory)
-  print(mem_used())
 
   message("\n*** Running IHWcorrection\n")
   output <- IHWcorrection(defchic.settings, DESeqOut, FullRegionData[[1]], DESeqOutControl, FullRegionData[[2]], countput = FullRegionData[[3]]) 
-  printMemoryFunction(printMemory)
-  print(mem_used())
 
   print(defchic.settings)
   print(sessionInfo())
