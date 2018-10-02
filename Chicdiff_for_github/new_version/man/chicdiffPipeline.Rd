@@ -5,7 +5,7 @@
 Chicdiff pipeline function
 }
 \description{
-This function runs data through the CHiCAGO pipeline.
+This function runs data through the Chicdiff pipeline.
 }
 \usage{
 chicdiffPipeline(defchic.settings)
