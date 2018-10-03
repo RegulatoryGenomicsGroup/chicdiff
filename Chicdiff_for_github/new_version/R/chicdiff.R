@@ -241,7 +241,7 @@ readAndFilterPeakMatrix <- function(peakFiles, targetColumns, conditions, score)
   x <- x[!is.na(dist),] ## <- FILTER OUT TRANS INTERACTIONS - Assumed in (*)
   
   filtered_baits <- all_baits[which(!(all_baits %in% unique(x$baitID)))]
-  filtered_baits <- list(rejected_baits)
+  filtered_baits <- list(filtered_baits)
   fwrite(filtered_baits, "./filtered_baits.txt")
   
   x
