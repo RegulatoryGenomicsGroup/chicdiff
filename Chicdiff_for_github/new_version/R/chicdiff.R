@@ -108,7 +108,8 @@ setchicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
       stop(paste("No peak files found at the specified location", defchic.settings[["peakfiles"]]))
   }
   
-  defchic.settings[["targetColumns"]] = .getTargetColumns(targetRDSorRDAs)
+  targetColumns <- .getTargetColumns(targetRDSorRDAs)
+  defchic.settings[["targetColumns"]] = targetColumns
   peakfile_columns <- colnames(.multimerge(peakfiles))
   
   if(!all(targetColumns %in% peakfile_columns)){
