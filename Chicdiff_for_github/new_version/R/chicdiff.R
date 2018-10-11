@@ -1720,30 +1720,31 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   dds <- DESeqDataSetFromMatrix(countData = regionDataMatrix,
                                 colData = colData,
                                 design = ~ condition)
-  
+
   dds.nullModel <- estimateSizeFactors(dds)
-  dds.M3 <- copy(dds.nullModel)
+  dds.testModel <- copy(dds.nullModel)
   
   nullSizeFactors <- sizeFactors(dds.nullModel)
 
   message("construct an appropriate DESeq object")
   print(mem_used())
   
-  ##model 1) standard model
+  ##Construct the model for the CONTROL regions
   dds.nullModel <- estimateDispersions(dds.nullModel)
   dds.nullModel <- nbinomWaldTest(dds.nullModel)
-
+  
+  ##Construct the model for the TEST regions
   normFactorsFull <- matrix(regionData.impute$FullMean, ncol=nSamples, byrow = TRUE)
   
-  normFactorsM3 <- normFactorsFull
-  normFactorsM3 <- normFactorsM3 / exp(rowMeans(log(normFactorsM3))) ##<- normalize to get geometric mean = 1
+  normFactorstestModel <- normFactorsFull
+  normFactorstestModel <- normFactorstestModel / exp(rowMeans(log(normFactorstestModel))) ##<- normalize to get geometric mean = 1
   ##remove NA rows
-  selNA <- apply(normFactorsM3, 1, function(x){any(is.na(x))})
-  normFactorsM3[selNA,] <- rep(nullSizeFactors, each=sum(selNA))
-  normalizationFactors(dds.M3) <- normFactorsM3
+  selNA <- apply(normFactorstestModel, 1, function(x){any(is.na(x))})
+  normFactorstestModel[selNA,] <- rep(nullSizeFactors, each=sum(selNA))
+  normalizationFactors(dds.testModel) <- normFactorstestModel
   
-  dds.M3 <- estimateDispersions(dds.M3)
-  dds.M3 <- nbinomWaldTest(dds.M3)
+  dds.testModel <- estimateDispersions(dds.testModel)
+  dds.testModel <- nbinomWaldTest(dds.testModel)
   
   ##get annotation information -----------
   
@@ -1768,7 +1769,7 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   setkey(annoData, regionID)
   stopifnot(identical(1:nrow(annoData), annoData$regionID))
   
-  results <- as.data.table(as.data.frame(results(dds.M3)), keep.rownames = "id")
+  results <- as.data.table(as.data.frame(results(dds.testModel)), keep.rownames = "id")
   results$id <- as.integer(results$id)
   setkey(results, id)
   
@@ -1965,7 +1966,7 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
   print(mem_used())
   
   ##Convert
-  as.data.frame(out) #is this line still necessary? I will check and report back.
+  #as.data.frame(out) #is this line still necessary? I will check and report back.
   setDT(out)
   
   out.control <- DESeqOutControl ##DESeqOut and DESeqOutControl
