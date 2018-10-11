@@ -1730,10 +1730,12 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   message("construct an appropriate DESeq object")
   print(mem_used())
   
-  ##model 1) standard model
+  ##model 1) standard DESeq2 model
   dds.nullModel <- estimateDispersions(dds.nullModel)
   dds.nullModel <- nbinomWaldTest(dds.nullModel)
 
+  ##model 2 is defunct
+  ##model 3) use fullMean scaling factors
   normFactorsFull <- matrix(regionData.impute$FullMean, ncol=nSamples, byrow = TRUE)
   
   normFactorsM3 <- normFactorsFull
