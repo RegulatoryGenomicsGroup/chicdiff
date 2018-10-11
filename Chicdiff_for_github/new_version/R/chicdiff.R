@@ -1683,21 +1683,22 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   fragData.impute[,FullMean.impute := geoMean(FullMean, na.rm = TRUE), by=c("baitID", "otherEndID")]
   fragData.impute[is.na(FullMean), FullMean:=FullMean.impute]
 
-  fragData[is.na(s_j),N := 0]
-  fragData[is.na(s_j),s_j := 0]
+  ##This is calculated but not used? So I have commented it out
+  #fragData[is.na(s_j),N := 0]
+  #fragData[is.na(s_j),s_j := 0]
 
   ##NOTE: Standard normalization factors from DESeq2 used for certain sites later.
   
   ##construct an appropriate DESeq object
   
-  regionData <- fragData[,list(
-    N=sum(N),
-    avDist=(min(distSign)+max(distSign))/2,
-    Bmean=sum(Bmean),
-    Tmean=sum(Tmean),
-    FullMean=sum(FullMean),
-    s_j=s_j[1]
-  ),by=c("baitID", "regionID", "sample")]
+  # regionData <- fragData[,list(
+  #   N=sum(N),
+  #   avDist=(min(distSign)+max(distSign))/2,
+  #   Bmean=sum(Bmean),
+  #   Tmean=sum(Tmean),
+  #   FullMean=sum(FullMean),
+  #   s_j=s_j[1]
+  # ),by=c("baitID", "regionID", "sample")]
   regionData.impute <- fragData.impute[,list(
     N=sum(N),
     avDist=(min(distSign)+max(distSign))/2,
