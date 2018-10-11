@@ -1968,7 +1968,7 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
   print(mem_used())
   
   ##Convert
-  as.data.frame(out) #is this line still necessary? I will check and report back.
+  #as.data.frame(out) #is this line still necessary? I will check and report back. ##No it isn't. JMC
   setDT(out)
   
   out.control <- DESeqOutControl ##DESeqOut and DESeqOutControl
