@@ -276,7 +276,7 @@ chicdiffPipeline <- function(defchic.settings, outprefix=NULL, printMemory=TRUE)
   RU <- getRegionUniverse(defchic.settings)  
   
   message("\n*** Running getControlRegionUniverse\n")
-  RUcontrol <- getControlRegionUniverse3(defchic.settings, RU)
+  RUcontrol <- getControlRegionUniverse(defchic.settings, RU)
 
   message("\n*** Running getFullRegionData\n")
   FullRegionData <- getFullRegionData(defchic.settings, RU, RUcontrol, suffix = "")
@@ -374,137 +374,7 @@ getRegionUniverse <- function(defchic.settings, suffix = ""){
   RU.DT
 }
 
-#------------------------------- getControlRegionUniverse----------------------------------#
-
-##function to sample appropriately from baitIDs on a given chromosome
-getRandomBaitID <- function(ch, dists, bmap, rmap)
-{
-  vIDs <- bmap[chr == ch,ID]
-  maxID <- rmap[chr == ch, max(ID)]
-  minID <- rmap[chr == ch, min(ID)]
-  unlist(lapply(dists,
-                function(d)
-                {
-                  temp <- (vIDs <= maxID - d) | (vIDs >= minID + d)
-                  if(length(which(temp))==1){
-                    unlist(sample(list(vIDs[temp])))
-                  } else {
-                    sample(vIDs[temp], size=1)
-                  }
-                }
-  ))
-}
-
-#------------------------------------------------------------------------------#
-
-##Function to perform shuffle
-shuffle <- function(x, bmap, rmap)
-{
-  ##chose new baits
-  ##keep the chromosomes the same, randomly select new baits
-  
-  ##whether we will go right or left (can be overridden if it makes placement impossible)
-  x$goRight <- rbinom(nrow(x),size=1,prob=0.5) == 1
-  
-  ##pick a bait that will give us a valid pair
-  for(ch in unique(x[,CHROM]))
-  {
-    x[CHROM == ch, baitIDshuff := getRandomBaitID(ch, fragdist + WIDTH, bmap, rmap)]
-  }
-  
-  ##pick other ends the correct distance away
-  x[, STARTshuff := ifelse(goRight, baitIDshuff + fragdist, baitIDshuff - fragdist - WIDTH)]
-  x[, STOPshuff := STARTshuff + WIDTH]
-  
-  ##verify other ends are on correct chromosome...
-  temp2 <- rmap[,c("chr", "ID"), with=FALSE]
-  x <- merge(x, temp2, all.x=TRUE, by.x="STARTshuff", by.y="ID")
-  x <- merge(x, temp2, all.x=TRUE, by.x="STOPshuff", by.y="ID")
-  x[, notOk := is.na(chr.x) | is.na(chr.y) | chr.x != CHROM | chr.y != CHROM]
-  ##...and that OEIDs are positive!
-  x[STOPshuff < 1 | STARTshuff < 1, notOk := TRUE]
-  x$chr.x <- NULL
-  x$chr.y <- NULL
-  
-  ##Fix the broken other ends
-  x[(notOk), goRight:=!goRight]
-  
-  ##pick other ends the correct distance away
-  x[, STARTshuff := ifelse(goRight, baitIDshuff + fragdist, baitIDshuff - fragdist - WIDTH)]
-  x[, STOPshuff := STARTshuff + WIDTH]
-  
-  ##verify other ends are on correct chromosome...
-  temp2 <- rmap[,c("chr", "ID"), with=FALSE]
-  x <- merge(x, temp2, all.x=TRUE, by.x="STARTshuff", by.y="ID")
-  x <- merge(x, temp2, all.x=TRUE, by.x="STOPshuff", by.y="ID")
-  x[(notOk), notOk := is.na(chr.x) | is.na(chr.y) | chr.x != CHROM | chr.y != CHROM]
-  ##...and that OEIDs are positive!
-  x[STOPshuff < 1 | STARTshuff < 1, notOk := TRUE]
-  x$chr.x <- NULL
-  x$chr.y <- NULL
-  
-  if(any(x$notOk)) {stop("Random selection failed")}
-  
-  x
-}
-
-#------------------------------------------------------------------------------#
-
-## RU is the output from getRegionUniverse()
-
-getControlRegionUniverse <- function(defchic.settings, RU, suffix = "")
-{
-  
-  rmapfile = defchic.settings[["rmapfile"]]
-  baitmapfile = defchic.settings[["baitmapfile"]]
-  saveRDS = defchic.settings[["saveRDS"]]
-  
-  ##Return to short format
-  RUshort <- RU[,list(START=min(otherEndID), STOP=max(otherEndID)),by=c("baitID", "regionID")]
-  
-  ##Scramble enhancer locations
-  ##get chromosome lengths
-  rmap <- Chicago:::.readRmap(list(rmapfile=rmapfile))
-  bmap <- Chicago:::.readBaitmap(list(baitmapfile=baitmapfile))
-  colnames(rmap) <- c("chr","start","stop","ID")
-  colnames(bmap) <- c("chr","start","stop","ID","gene")
-  chrlengths <- rmap[,list(maxwidth=max(ID)),by="chr"]
-  chrlengths <- chrlengths[!(chr %in% c("MT")),]
-  #chrlengths <- chrlengths[!(chr %in% c("MT", "Y")),]
-  RUshort <- merge(RUshort,
-                   rmap[,c("chr","ID"),with=FALSE],
-                   by.x="baitID",
-                   by.y="ID")
-  setnames(RUshort, "chr","CHROM")
-  
-  RUshort[,WIDTH:=STOP-START]
-  
-  ##reshuffle the enhancers
-  #RUshort$CHROM <- substr(RUshort$CHROM, 4, nchar(RUshort$CHROM))
-  RUshort <- merge(RUshort, chrlengths, by.x = "CHROM", by.y="chr")
-  RUshort[,fragdist:=pmin(abs(START - baitID), abs(STOP - baitID))]
-  
-  
-  #RUshortBackup <- copy(RUshort)
-  RUshort <- shuffle(RUshort, bmap=bmap, rmap=rmap)
-  
-  ##Return to long format
-  RUshuffled <- RUshort[,c("baitIDshuff", "STARTshuff", "STOPshuff"),with=FALSE]
-  RUshuffled$regionID <- 1:nrow(RUshuffled)
-  names(RUshuffled) <- c("baitID","start","end","regionID")
-  RUcontrol <- RUshuffled[,list(otherEndID = start:end),by=c("baitID", "regionID")]
-  if(saveRDS == TRUE){
-    saveRDS(RUcontrol, paste0("./ControlRegionUniverse", suffix, ".Rds"))
-  }
-  RUcontrol
-}
-
-#-----------------------Functions needed for getControlRegionUniverse2 and 3 ----------------------------#
-
-giveRandomBait <- function(chrom, bmap, regionID){
-  vIDs <- bmap[chr == chrom, ID]
-  unlist(lapply(regionID, function(x, vIDs){sample(vIDs, 1)}, vIDs))
-}
+#-----------------------Functions needed for getControlRegionUniverse ----------------------------#
 
 giveOneSeed <- function(bait, dist, min, max){
   ifelse(bait + dist < min, bait - dist, ifelse(bait + dist > max, bait - dist, bait + dist))   
@@ -527,69 +397,9 @@ giveManySeeds <- function(bait, min, max, std){
   mapply(giveOneSeed, bait, dists, MoreArgs = list(min = min, max = max))  
 }
 
+#-------------------------------------------getControlRegionUniverse----------------------------------------#
 
-#-------------------------------------------getControlRegionUniverse2----------------------------------------#
-
-getControlRegionUniverse2 <- function(defchic.settings, RU){
-  
-  RUexpand <- defchic.settings[["RUexpand"]]
-  saveRDS <- defchic.settings[["saveRDS"]]
-  bmap <- fread(defchic.settings[["baitmapfile"]])
-  rmap <- fread(defchic.settings[["rmapfile"]])
-  colnames(rmap) <- c("chr", "start", "end", "ID")
-  colnames(bmap) <- c("chr", "start", "end", "ID", "baitname")
-  
-  RUshorter <- merge(RU, rmap[,c("chr", "ID")], by.x = "baitID", by.y = "ID")
-  max_contacts <- RUshorter[, list(max_contact = max(abs(baitID - otherEndID))),by = "chr"]
-  RUshorter <- unique(RUshorter[,c("chr", "baitID", "regionID")])
-  
-  
-  for(ch in unique(RUshorter[,chr])){
-    
-    std <- max_contacts[chr == ch, max_contact]/3
-    max <- rmap[chr == ch, max(ID)]
-    min <- rmap[chr == ch, min(ID)]
-    
-    RUshorter[chr == ch, rand_bait := giveRandomBait(ch, bmap, regionID)]
-    RUshorter[chr == ch, seed := giveManySeeds(rand_bait, min = min, max = max, std = std)]
-  }
-  
-  RUcontrol <- RUshorter[,c("rand_bait", "seed", "regionID")]
-  colnames(RUcontrol) <- c("baitID", "oeID", "regionID")
-  
-  RUcontrol <- RUcontrol[,
-                         list(otherEndID = expandAvoidBait(baitID, oeID, RUexpand)), 
-                         by=c("baitID","regionID")
-                         ]  
-  
-  ## Ensure regions remain within the genome
-  maxfrag <- max(rmap[,ID])
-  RUcontrol <- RUcontrol[otherEndID <= maxfrag,]
-  
-  ## Ensure regions stay on the correct chromosome
-  setkey(RUcontrol, otherEndID)
-  setkey(rmap, ID)
-  RUcontrol <- rmap[,c("chr", "ID"),with=FALSE][RUcontrol]
-  setnames(RUcontrol, "ID", "otherEndID")
-  setkey(RUcontrol, baitID)
-  RUcontrol <- rmap[,c("chr", "ID"),with=FALSE][RUcontrol]
-  setnames(RUcontrol, "ID", "baitID")
-  
-  ## keep only cis interactions
-  RUcontrol <- RUcontrol[chr == i.chr,]
-  RUcontrol[,chr:=NULL]
-  RUcontrol[,i.chr:=NULL]
-  
-  if(saveRDS){
-    saveRDS(RUcontrol, "ControlRegionUniverse.Rds")
-  }
-  
-  return(RUcontrol)
-}
-
-#-------------------------------------------getControlRegionUniverse3----------------------------------------#
-
-getControlRegionUniverse3 <- function(defchic.settings, RU){
+getControlRegionUniverse <- function(defchic.settings, RU){
   
   RUexpand <- defchic.settings[["RUexpand"]]
   saveRDS <- defchic.settings[["saveRDS"]]
