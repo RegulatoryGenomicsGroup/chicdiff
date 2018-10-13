@@ -1880,30 +1880,38 @@ plotdiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, pl
     ylim_max <- count_temp[,max(Nav)]
     
     p1 <- ggplot(count_temp[condition == conditions[[1]]], aes(oeID_mid, Nav)) +
-      geom_point(aes(colour=big_score, alpha = 0.4)) + 
+      geom_point(aes(colour=big_score, alpha = 0.4, stroke = 0)) + 
       scale_colour_manual(values = c(bgCol, lev2Col, lev1Col)) +
       geom_line(aes(oeID_mid, Bav)) +
       xlim(xlimit[[1]], xlimit[[2]]) +
       ylim(0, ylim_max) +
       theme(legend.position = "none",
-            axis.title.x = element_blank()) +
+            axis.text.x = element_text(size = 8),
+            axis.text.y = element_text(size = 8),
+            axis.title.x = element_blank(),
+            axis.title.y = element_text(size = 8),
+            plot.title = element_text(size = 10)) +
       ylab("N")
     
     if(plotBaitNames & plotBaitIDs){
-      p1 <- p1 + ggtitle(paste0(chroms_bait[i][,name], " (", chroms_bait[i][,baitID], ")"))
+      p1 <- p1 + ggtitle(paste0(strsplit(strsplit(chroms_bait[i][,name], ",")[[1]], "-")[[1]], " (", chroms_bait[i][,baitID], ")"))
     }else if(plotBaitNames){
-      p1 <- p1 + ggtitle(chroms_bait[i][,name])
+      p1 <- p1 + ggtitle(strsplit(strsplit(chroms_bait[i][,name], ",")[[1]], "-")[[1]])
     } else if(plotBaitIDs){
       p1 <- p1 + ggtitle(chroms_bait[i][,baitID])
     }
     
     p2 <- ggplot(count_temp[condition == conditions[[2]]], aes(oeID_mid, Nav)) +
-      geom_point(aes(colour=big_score, alpha = 0.4)) + 
+      geom_point(aes(colour=big_score, alpha = 0.4, stroke = 0)) + 
       scale_colour_manual(values = c(bgCol, lev2Col, lev1Col)) +
       geom_line(aes(oeID_mid, Bav)) +
       #     xlim(xlim[[1]], xlim[[2]]) +
       scale_y_reverse(limits = c(ylim_max, 0)) +
-      theme(legend.position = "none") + 
+      theme(legend.position = "none",
+            axis.text.x = element_text(size = 8),
+            axis.text.y = element_text(size = 8),
+            axis.title.x = element_text(size = 8),
+            axis.title.y = element_text(size = 8)) + 
       ylab("N") +
       xlab("        ") +
       scale_x_continuous(position = "top", limits = c(xlimit[[1]], xlimit[[2]]))
@@ -1996,8 +2004,10 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
   if(DiagPlot == TRUE){
     plot(ihwRes)
     ggsave("IHWweightPlot.png", device = "png", path = "./")
+    dev.off()
     plot(ihwRes, what = "decisionboundary")
     ggsave("IHWdecisionBoundaryPlot.png", device = "png", path = "./")
+    dev.off()
   }
 
 
@@ -2051,6 +2061,7 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
     baits <- sample(head(unique(out[sel]$baitID), 100), 4)
     plotdiffBaits(output = out, countput = countput, baitmapfile = baitmapfile, baits = baits)
     ggsave("diffbaitPlot.pdf", device = "pdf", path = "./")
+    dev.off()
   }
   
   if(saveRDS == TRUE){
