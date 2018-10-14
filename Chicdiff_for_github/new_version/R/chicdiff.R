@@ -1520,7 +1520,7 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
 
 
   
-  nSamples <- length(unique(regionData$sample))
+  nSamples <- length(unique(regionData.impute$sample))
   
   regionDataMatrix <- matrix(regionData.impute$N,
                              ncol=nSamples,
