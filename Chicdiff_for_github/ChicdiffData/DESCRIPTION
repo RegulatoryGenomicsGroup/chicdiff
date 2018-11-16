@@ -1,0 +1,10 @@
+Package: ChicdiffData
+Version: 0.1
+Date: 2018-09-10
+Title: CHiCdiff Data
+Author: Jonathan Cairns, William Orchard, Valeriya Malysheva, Mikhail Spivakov
+Maintainer: Mikhail Spivakov <mikhail.spivakov@lms.mrc.ac.uk>
+Description: Subsets of Promoter Capture Hi-C data (Chinputs) and subsets of Chicago results for this data (.Rda) conveniently packaged for Chicdiff users. Data includes interactions detected for 500 random baits on chromosome 1 in Naive CD4 and Monocytes.
+Depends: R (>= 3.3.0)
+Suggests: Chicdiff
+LazyData: true

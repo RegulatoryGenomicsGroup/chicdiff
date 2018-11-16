@@ -7,5 +7,6 @@ Maintainer: Mikhail Spivakov <mikhail.spivakov@lms.mrc.ac.uk>
 Description: A pipeline for differential analysis of Capture Hi-C data
 Depends: R (>= 3.3.0), data.table
 Imports: Chicago, IRanges, DESeq2, IHW
-Suggets: ggplot2, cowplot, hexbin, argparser, testthat
+Suggests: ggplot2, cowplot, hexbin, argparser, testthat, BiocStyle, knitr, rmarkdown, ChicdiffData, IRanges
+VignetteBuilder: knitr
 LazyData: true

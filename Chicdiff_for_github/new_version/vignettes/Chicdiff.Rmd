@@ -1,0 +1,76 @@
+---
+title: "Chicdiff Vignette"
+author: "Jonathan Cairns,William Orchard, Valeriya Malysheva, Mikhail Spivakov"
+date: 15th November, 2018
+VignetteIndexEntry: 
+output:
+  BiocStyle::html_document:
+    toc: true
+
+---
+<!--
+%\VignetteEngine{knitr::rmarkdown}
+%\VignetteIndexEntry{Chicdiff Vignette}
+%\VignetteDepends{}
+%\VignetteKeywords{Chicdiff}
+%\VignettePackage{Chicdiff}
+-->
+```{r style, echo = FALSE, results = 'asis'}
+BiocStyle::markdown()
+```
+
+# Introduction
+
+Chicdiff is a method for detecting statistically significant differential interactions in Capture HiC data. This vignette will walk you through a typical Chicdiff analysis. 
+
+A typical Chicdiff job for two biological replicates of CHi-C data takes 30 min wall-clock time and uses 15G RAM. Time and memory usage depends on data sparcity.
+
+------ ---------------------------------------------------------
+*NOTE* A wrapper to perform this type of analysis, called *runChicdiff.R*, is provided as part of *chicdiffTools*, which is available from our [Github repository](https://github.com/RegulatoryGenomicsGroup/chicdiff/). Refer to the *chicdiffTools* README for more information.
+
+
+---------------------------------------------------------------
+
+The statistical foundations of Chicdiff are presented in a separate paper that is currently available as a preprint [ref!!!]. Briefly, Chicdiff combines moderated differential testing for count data implemented in DESeq2 with CHi-C-specific procedures for signal normalisation and p-value weighting. To increase power, CHiCDiff combines reads across several fragments surrounding each significantly interacting region for each bait. Background estimates from CHiCAGO are used to construct a custom scaling matrix that is used in differential testing. The count and scaling matrices are provided as input for the DESeq2 package that tests each interaction for differences between conditions using a negative binomial model with moderated dispersion estimation. DESeq2 implements both pairwise testing between conditions, as well as likelihood ratio tests for multi-condition differences. The p-values from either of these tests are then submitted to the weighting procedure as described below. Due to high distance-dependent variations of signal-to-noise ratios and effect sizes in CHi-C data CHicdiff performs non-uniform multiple testing correction, such that weaker signals at longer distances are corrected more vigorously. We use IHW to learn the weights on the p-values obtained from a differential testing of fragment pairs in a 'training set' that is sampled from the full count data for each sample. We use interaction distance bins as covariates to assign weights to each distance bin in a manner that maximises the overall fraction of rejected null hypotheses. The distance-dependent weights learned this way are applied to the p-values in the test set, and the resulting weighted p-values are reported to the user.
+
+
+
+--------- ------------------------------------------------------
+*WARNING* The data set used in this tutorial comes from the package *ChicdiffData*. This package contains small parts (chromosome 19) of published Promoter Capture HiC data sets in human Naive CD4+ T cells and Monocytes [@Javierre2016] - note that we are only reusing raw data from this publication. Do not use any of these sample input data for purposes other than training. 
+
+---------------------------------------------------------------
+
+
+In this vignette, we use the Naive CD4+ T cells and Monocytes data [@Javierre2016]:
+
+```{r, message=FALSE}
+library(Chicdiff)
+library(ChicdiffData)
+```
+
+
+# Workflow
+
+## Input files required
+
+Before you start, you will need: 
+
+1. Two restriction map information files ("design files"):
+
+- Restriction map file (.rmap) - a bed file containing coordinates of the restriction fragments. By default, 4 columns: chr, start, end, fragmentID.
+- Bait map file (.baitmap) - a bed file containing coordinates of the baited restriction fragments, and their associated annotations. By default, 5 columns: chr, start, end, fragmentID, baitAnnotation. The regions specified in this file, including their fragmentIDs, must be an exact subset of those in the .rmap file. The baitAnnotation is a text field that is used only to annotate the output and plots.
+
+We recommend that you put all five of these files into the same directory (that we refer to as designDir). An example of a valid design folder, for a sample of the CD4+ and Monocytes data used in this vignette, is provided in the ChicdiffData package, as follows.
+
+```{r}
+dataPath <- system.file("extdata", package="ChicdiffData")
+testDesignDir <- file.path(dataPath, "designDir")
+dir(designDir)
+```
+
+------ ---------------------------------------------------------
+*NOTE* These are same files, used to run CHiCAGO
+
+---------------------------------------------------------------
+
+
