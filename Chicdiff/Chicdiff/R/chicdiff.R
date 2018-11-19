@@ -574,7 +574,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
     }
     
     message("Finished reading")
-    print(mem_used())
+    
     
     ##1b) collect the Bmean, Tmean information that is present
     
@@ -584,7 +584,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
     ##(note that score=NA occurs when N=0 - hence replace score=0)
     
     message("Collected Bmean and Tmean")
-    print(mem_used())
+    
     
     ##1c) recalculate distSign (need to do this for control regions)
     if(any(is.na(out$distSign)))
@@ -604,7 +604,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
     }
     
     message("Recalculated distSign")
-    print(mem_used())
+    
     
     ##1d) bait annotation: collect s_js, tblb
     ##Note that s_j can be NA (for baits that were filtered out!)
@@ -614,7 +614,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
     out <- merge(out, temp, all.x=TRUE)
     
     message("Collected s_js and tblb")
-    print(mem_used())
+    
     
     ##1e) OE annotation: collect s_is, tlb
     ##s_i not allowed to be NA - just assume 1.
@@ -628,7 +628,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
     setkey(out, baitID, otherEndID)
     
     message("Collected s_is and tlb")
-    print(mem_used())
+    
     
     ##1f) reconstruct Tmean information
     setkey(x, tlb, tblb)
@@ -639,7 +639,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
     out <- merge(out, temp, all.x=TRUE)
     
     message("Found Tmean")
-    print(mem_used())
+    
     
     ##1g) impute some of the missing Tmeans
     ##    missing tlb suggests that the other end was rarely observed, so assume lowest
@@ -650,7 +650,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
     out[is.na(tlb) & !is.na(tblb), Tmean := tempDictionary[tblb]]
     
     message("Imputed missing Tmean")
-    print(mem_used())
+    
     
     ##2) Reconstruct the distance function from distbin info
     distFunParams <- chicestimateDistFun(x)
@@ -664,7 +664,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
     outData[[i]] <- out
     
     message("Estimated Bmean")
-    print(mem_used())
+    
     
     if(!is_control){
       rmap_copy <- copy(rmap)
@@ -706,7 +706,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
     }
     
     message("Saved counts")
-    print(mem_used())
+    
     
   }
   
@@ -726,14 +726,14 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
   }
   
   message("between (1)")
-  print(mem_used())
+  
   
   
   saveRDS(outData, paste0("03interactionsParameters", suffix, ".Rds"))   ##REMEMBER TO REMOVE THESE TWO SAVES
   saveRDS(dispersions, paste0("03dispersionParamters", suffix, ".Rds"))
   
   message("out of iterative reading function")
-  print(mem_used())
+  
   
   baits <- sort(unique(RU$baitID)) ##baits to get information from
   
@@ -751,7 +751,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
       setkey(countData[[i]], baitID)
       
       message("countData info collected")
-      print(mem_used())
+      
     }
     
     x <- RU
@@ -768,11 +768,11 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
       setnames(x, old="N", new=columnNames[i])
       
       message("countData info merged")
-      print(mem_used())
+      
     }
     
     message("no chinput case finished")
-    print(mem_used())
+    
   }
   
   #Recall that outData and dispersions are our useful outputs from this part above 
@@ -803,7 +803,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
       rm(x)
       
       message("Finished reading of chinputs")
-      print(mem_used())
+      
       gc()
     }
     
@@ -824,7 +824,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
       setnames(x, old="N", new=columnName)
       
       message("count the number of reads in each replicate for CountOut")
-      print(mem_used())
+      
     }
     
   }
@@ -849,7 +849,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
   x[, c("chr.x","midpoint.x","chr.y","midpoint.y"):=NULL]
   
   message("collected distances for CountOut")
-  print(mem_used())
+  
   
   CountOut <- x
   saveRDS(CountOut, paste0("02CountOut", suffix, ".Rds")) ##REMEMBER TO REMOVE
@@ -880,7 +880,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
     #x <- merge(x, temp, all.x=TRUE, allow.cartesian=TRUE)
     
     message("count + interaction parameter data together")
-    print(mem_used())
+    
   }
   
   ##rework table to have columns sample, N, FullMean, etc
@@ -901,13 +901,13 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
   setkey(recast, regionID)
   
   message("recast")
-  print(mem_used())
+  
   
   if(saveRDS == TRUE){
     saveRDS(recast, paste0("./FullRegionData", suffix, ".Rds"))
     
     message("saved FullRegionData")
-    print(mem_used())
+    
   }
   
   if(!is_control){
@@ -978,7 +978,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
       }
 
     message("Finished reading")
-    print(mem_used())
+    
 
     ##1b) collect the Bmean, Tmean information that is present
     setkey(x, baitID, otherEndID)
@@ -988,7 +988,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     outControl <- x[RUcontrol_IntParams, c("baitID", "otherEndID","distSign","Bmean", "Tmean", "score"), with=FALSE]
 
     message("Collected Bnmean and Tmean")
-    print(mem_used())
+    
     #New lines above to produce outControl in the same way as out sis produced
     
     ##(note that score=NA occurs when N=0 - hence replace score=0)
@@ -1010,7 +1010,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
       out$distSign <- temp$distSign
 
       message("recalculated distSign for out")
-      print(mem_used())
+      
     }
     #Code below just a duplicate of that above but should be adapted for the control outputs. The >1 is just so...
     #...discrepencies due to rounding aren't a problem.
@@ -1031,7 +1031,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
       outControl$distSign <- temp$distSign
 
       message("recalculated distSign for outControl")
-      print(mem_used())
+      
     }
 
     ##1d) bait annotation: collect s_js, tblb
@@ -1044,7 +1044,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     outControl <- merge(outControl, temp, all.x = TRUE)
 
     message("recalculated distSign for outControl")
-    print(mem_used())
+    
 
     ##1e) OE annotation: collect s_is, tlb
     ##s_i not allowed to be NA - just assume 1.
@@ -1064,7 +1064,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     setkey(outControl, baitID, otherEndID)
 
     message("collected s_is and tlb")
-    print(mem_used())
+    
 
     ##1f) reconstruct Tmean information
     setkey(x, tlb, tblb)
@@ -1078,7 +1078,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     outControl <- merge(outControl, temp, all.x=TRUE)
 
     message("collected s_is and tlb")
-    print(mem_used())
+    
 
     ##1g) impute some of the missing Tmeans
     ##    missing tlb suggests that the other end was rarely observed, so assume lowest
@@ -1090,13 +1090,13 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     outControl[is.na(tlb) & !is.na(tblb), Tmean := tempDictionary[tblb]]
 
     message("imputed some of the missing Tmeans")
-    print(mem_used())
+    
     
     ##2) Reconstruct the distance function from distbin info
     distFunParams <- chicestimateDistFun(x)
 
     message("Reconstructed the distance function")
-    print(mem_used())
+    
     
     ##3) Reconstruct Bmean information (But!! When s_j = NA,
     ##   ensure that Bmean comes out as NA too.)
@@ -1113,7 +1113,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     outDataControl[[i]] <- outControl
 
     message("Reconstructed Bmean")
-    print(mem_used())
+    
     
     #This keeps all of the loaded RDAs if we still need them for the count data because we don't have chinputs
     rmap_copy <- copy(rmap)
@@ -1148,7 +1148,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
       rm(x)
 
       message("saved counts")
-      print(mem_used())
+      
     }
     gc()
   }
@@ -1167,7 +1167,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
   saveRDS(countput, "countput.Rds")
   
   message("between (1)")
-  print(mem_used())
+  
 
   # outData, outDataControl and dispersions are our useful outputs from this part above  
 
@@ -1175,7 +1175,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
   saveRDS(dispersions, paste0("03dispersionParamters", suffix, ".Rds"))
 
   message("out of iterative reading function")
-  print(mem_used())
+  
 
   baits <- sort(unique(RU$baitID)) 
   baitsControl <- sort(unique(RUcontrol$baitID))
@@ -1198,7 +1198,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
       setkey(countData[[i]], baitID)
 
       message("countData info collected")
-      print(mem_used())
+      
     }
 
     for(i in seq_along(countDataControl)){
@@ -1208,7 +1208,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
       setkey(countDataControl[[i]], baitID)
 
       message("countDatacontrol info collected")
-      print(mem_used())
+      
     }
     
     CountOut <- RU
@@ -1217,7 +1217,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     setkey(CountOutControl, baitID, otherEndID)
 
     message("between (2)")
-    print(mem_used())
+    
     
     for(i in seq_along(countData))
     {
@@ -1229,7 +1229,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
       setnames(CountOut, old="N", new=columnNames[i])
 
       message("countData info merged")
-      print(mem_used())
+      
     }
 
     for(i in seq_along(countDataControl))
@@ -1242,11 +1242,11 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
       setnames(CountOutControl, old="N", new=columnNames[i])
 
       message("countDatacontrol info merged")
-      print(mem_used())
+      
     }
 
     message("no chinput case finished")
-    print(mem_used())
+    
   }
 
   ##2-Chi) If Chinputs are given: Collect all of the read count information ----------------
@@ -1273,7 +1273,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     rm(y)
 
     message("Finished reading of chinputs")
-    print(mem_used())
+    
     gc()
   }
   
@@ -1292,7 +1292,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     setnames(CountOut, old="N", new=columnName)
 
     message("count the number of reads in each replicate for CountOut")
-    print(mem_used())
+    
   }
   
   #Repeating the above code for the control
@@ -1309,7 +1309,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     setnames(CountOutControl, old="N", new=columnName)
 
     message("count the number of reads in each replicate for CountOutControl")
-    print(mem_used())
+    
    }
   }
 
@@ -1334,7 +1334,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
   CountOut[, c("chr.x","midpoint.x","chr.y","midpoint.y"):=NULL]
 
   message("collected distances for CountOut")
-  print(mem_used())
+  
   
   #Just repeating the above code for the control
   CountOutControl <- merge(CountOutControl, rmap, by.x="otherEndID", by.y="fragID")  
@@ -1348,7 +1348,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
   CountOutControl[, c("chr.x","midpoint.x","chr.y","midpoint.y"):=NULL]
 
   message("collected distances for CountOutcontrol")
-  print(mem_used())
+  
 
   # 04mergeData.R
   
@@ -1388,7 +1388,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     CountOutControl <- merge(CountOutControl, tempControl, all.x=TRUE)
 
     message("count + interaction parameter data together")
-    print(mem_used())
+    
     gc()
 
   }
@@ -1410,7 +1410,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
   setkey(recast, regionID)
 
   message("recast")
-  print(mem_used())
+  
   
   # Again - just a copy and paste for the control here 
   recastControl = melt(CountOutControl, measure = sels, value.name = myCols,
@@ -1424,18 +1424,18 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
   setkey(recastControl, regionID)
 
   message("recastControl")
-  print(mem_used())
+  
   
   if(saveRDS == TRUE){
     saveRDS(recast, paste0("./FullRegionData", suffix, ".Rds"))
     saveRDS(recastControl, paste0("./FullControlRegionData", suffix, ".Rds"))
 
     message("saved FullRegionData and FullControlRegionData")
-    print(mem_used())
+    
   }
 
   message("reported FullRegionDatalist")
-  print(mem_used())
+  
   return(list(recast, recastControl, countput))
 }
 
@@ -1485,7 +1485,7 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   setkey(fragData, otherEndID)
 
   message("saved a copy of FullRegionData")
-  print(mem_used())
+  
   
   fragData.impute <- copy(fragData)
   fragData.impute[,s_j.impute := geoMean(s_j, na.rm = TRUE), by=c("baitID", "otherEndID")]
@@ -1538,7 +1538,7 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   nullSizeFactors <- sizeFactors(dds.nullModel)
 
   message("construct an appropriate DESeq object")
-  print(mem_used())
+  
   
   ##model 1) standard DESeq2 model
   dds.nullModel <- estimateDispersions(dds.nullModel)
@@ -1593,7 +1593,7 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   out[,id := NULL]
 
   message("outModel")
-  print(mem_used())
+  
   
   results.null <- as.data.table(as.data.frame(results(dds.nullModel)), keep.rownames = "id")
   results.null$id <- as.integer(results.null$id)
@@ -1607,7 +1607,7 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   out.nullModel[,id := NULL]
 
   message("out.nullModel")
-  print(mem_used())
+  
 
   
   if(saveRDS == TRUE){
@@ -1616,7 +1616,7 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   }
 
   message("savedRDS")
-  print(mem_used())
+  
   out 
 }
 
@@ -1783,7 +1783,7 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
   out$shuff <- sample(out$pvalue)
 
   message("Comparison against p-vals for out")
-  print(mem_used())
+  
   
   ##Convert
   #as.data.frame(out) #is this line still necessary? I will check and report back. ##No it isn't. JMC
@@ -1800,7 +1800,7 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
   out.control$shuff <- sample(out.control$pvalue)
 
   message("Comparison against p-vals for outcontrol")
-  print(mem_used())
+  
   
   ##Convert
   as.data.frame(out.control) #This line is necessary even if the one for out may not be
@@ -1809,7 +1809,7 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
   ihwRes <- ihw(pvalue ~ abs(avDist),  data = out.control, alpha = 0.05)
 
   message("Trained weights on the control sample")
-  print(mem_used())
+  
   
   if(DiagPlot == TRUE){
     plot(ihwRes)
@@ -1847,7 +1847,7 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
   distLookup$maxLogDist[nrow(distLookup)] = Inf
 
   message("Learned distance dependency")
-  print(mem_used())
+  
   
   ##--------------------------------------------------------------
   ##Apply to test data
@@ -1864,7 +1864,7 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
   out[,weighted_pvalue := pvalue/weight]
 
   message("applied to test data")
-  print(mem_used())
+  
   
   if (diffbaitPlot == TRUE){
     sel <- order(out$weighted_pvalue)
