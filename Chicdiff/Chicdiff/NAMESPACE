@@ -1,2 +1,11 @@
 # Export all names
 exportPattern(".")
+
+import(data.table)
+import(Chicago)
+import(IRanges)
+import(DESeq2)
+import(IHW)
+import(ggplo2)
+import(cowplot)
+import(hexbin)
