@@ -186,6 +186,6 @@ output <- chicdiffPipeline(defchic.settings)
 
 The plots are as follows (an explanation follows):
 
-```{r, echo=FALSE, message=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.show ='hold'}
 output <- chicdiffPipeline(defchic.settings)
 ```
