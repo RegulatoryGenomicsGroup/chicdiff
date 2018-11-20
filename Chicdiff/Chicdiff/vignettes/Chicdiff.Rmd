@@ -184,8 +184,14 @@ output <- chicdiffPipeline(defchic.settings)
 
 ``chicdiffPipeline()`` produces a number of plots, that are saved in the working directory.
 
-The plots are as follows (an explanation follows):
+The plots produced by Chicdiff for the chr19 datasets are provided in the *ChicdiffData* package and can be vizualized in the following way: 
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.show ='hold'}
-output <- chicdiffPipeline(defchic.settings)
+```{r}
+resultsPath <- file.path(dataPath, "CD4_Mono_results")
+
+IHWdecisionBoundaryPlot <- readPNG(file.path(resultsPath,"IHWdecisionBoundaryPlot.png"))
+grid::grid.raster(IHWdecisionBoundaryPlot)
+
+IHWweightPlot <- readPNG(file.path(resultsPath,"IHWweightPlot.png"))
+grid::grid.raster(IHWweightPlot)
 ```
