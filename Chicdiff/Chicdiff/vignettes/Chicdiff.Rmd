@@ -195,3 +195,23 @@ grid::grid.raster(IHWdecisionBoundaryPlot)
 IHWweightPlot <- readPNG(file.path(resultsPath,"IHWweightPlot.png"))
 grid::grid.raster(IHWweightPlot)
 ```
+
+### ### Interpreting the plots
+
+Below we describe the expected properties of the diagnostic plots, showing whether the criteria for the covariates are applicable.
+
+Note that the diagnostic plots above are computed using only a small fraction of the full CD4 and Monocyte datasets. In real-world, genome-wide datasets the trends described below should be more pronounced.
+
+1. *IHW decision boundary plot*: This plot shows whether the covariate (distance) in the control dataset is informative of the power under the alternative, and thus the IHW can be used.
+
+The trend is: low p-values are enriched at low covariate values. The higher the covariate values, the higher are the pvalues. This indicates that the distance covariate is correlated with power under the alternative.
+
+2. *Technical noise estimates*: The mean number of technical noise reads expected for other ends and baits, respectively, per pools of fragments. These pools, displayed on the x axis, again refer to the number of trans-chromosomal reads that the fragments accumulate.
+
+- The distributions' median and variance should trend upwards as we move from left to right.
+- In the lower subplot, the bait-to-bait estimates (here, the four bars on the far right) should be higher, on average, than the others. Both groups should also have medians and variances that trend upwards, moving from left to right.
+
+3. *Distance function*: The mean number of Brownian reads expected for an ``average`` bait, as a function of distance, plotted on a log-log scale.
+
+- The function should monotonically decrease.
+- The curve should fit the points reasonably well.
