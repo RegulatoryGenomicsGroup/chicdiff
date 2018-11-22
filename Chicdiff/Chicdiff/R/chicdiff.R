@@ -75,7 +75,7 @@ setchicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
   defchic.settings[["targetRDSorRDAs"]] = targetRDSorRDAs
   defchic.settings[["targetChs"]] = targetChs
   
-  if(is.na(targetRDSorRDAs) | is.na(targetChs)){
+  if(any(is.na(targetRDSorRDAs)) | any(is.na(targetChs))){
     if(is.na(defchic.settings[["inputfiles"]])){
       defchic.settings[["inputfiles"]] = inputfiles
     }else{
