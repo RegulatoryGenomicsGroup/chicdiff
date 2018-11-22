@@ -207,7 +207,7 @@ setchicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
   peakMatrix
 }
 
-readAndFilterPeakMatrix <- function(peakFiles, targetColumns, conditions, score){
+readAndFilterPeakMatrix <- function(peakFiles, targetColumns, targetRDSorRDAs, conditions, score){
 ## Essentially reads in the peak matrix, taking the target columns if specified (else just takes everything) and filters for rows where at least
 ##one score is > 5 (or whatever is specified) and filters out trans interactions. 
       if(length(peakFiles > 1)){
@@ -329,7 +329,7 @@ getRegionUniverse <- function(defchic.settings, suffix = ""){
   
   conditions <- names(targetRDSorRDAs)
   
-  x <- readAndFilterPeakMatrix(peakFiles = peakFiles, score = score, targetColumns = targetColumns, conditions = conditions)
+  x <- readAndFilterPeakMatrix(peakFiles = peakFiles, score = score, targetColumns = targetColumns, targetRDSorRDAs=targetRDSorRDAs, conditions = conditions)
   
   ## Expand the "point universe" to get "region universe" by "window" mode------------------
  
