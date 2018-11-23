@@ -12,12 +12,11 @@ getRegionUniverse(defchic.settings)
 }
 
 \arguments{
-  \item{defchic.settings} {defchic.settings defined by \code{\link{setchicExperiment}}
-}
+  \item{defchic.settings}{defchic.settings defined by \code{\link{setchicExperiment}}}
 }
 
 \value{
-  \item{RegionUniverse.Rds} {a data.table contains contact - region annotations}
+  \item{RegionUniverse.Rds}{a data.table contains contact - region annotations}
 }
 
 \author{

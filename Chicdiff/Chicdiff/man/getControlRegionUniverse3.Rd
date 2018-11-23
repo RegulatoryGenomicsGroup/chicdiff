@@ -14,12 +14,12 @@ For every contact from Region Universe this function:
 getControlRegionUniverse3(defchic.settings, RU)
 }
 \arguments{
-  \item{defchic.settings} {defchic.settings defined by running \code{\link{setchicExperiment}}}
-  \item{RU} {Region Universe defind by running \code{\link{getRegionUniverse}}}
+  \item{defchic.settings}{defchic.settings defined by running \code{\link{setchicExperiment}}}
+  \item{RU}{Region Universe defined by running \code{\link{getRegionUniverse}}}
 }
 
 \value{
-  \item{RegionUniverse.Rds} {a data.table contains contact - region annotations}
+  \item{RegionUniverse.Rds}{a data.table containing contact - region annotations}
 }
 
 \author{

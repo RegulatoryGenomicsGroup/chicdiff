@@ -12,33 +12,33 @@ plotdiffBaits(output, countput, baitmapfile, n = 3, baits = NULL, plotBaitNames 
 }
 
 \arguments{
-  \item{output} {final output of IHW function, containing all the information about the bait - other end - region: coordinates, counts, log2FoldChange, DESeq pvalue, weight and weighted pvalue and lots of other data.}
+  \item{output}{final output of IHW function, containing all the information about the bait - other end - region: coordinates, counts, log2FoldChange, DESeq pvalue, weight and weighted pvalue and lots of other data.}
   
-  \item{countput} {countput file, containing counts recovered from the .Rda Chicago files, produced in  \code{\link{getFullRegionData1}} or \code{\link{getFullRegionData2}}.}
+  \item{countput}{countput file, containing counts recovered from the .Rda Chicago files, produced in  \code{\link{getFullRegionData1}} or \code{\link{getFullRegionData2}}.}
 
-  \item{baitmapfile} {The location of the bait map file. Recovered from defchic.settings, produced by  \code{\link{setchicExperiment}}.}
+  \item{baitmapfile}{The location of the bait map file. Recovered from defchic.settings, produced by  \code{\link{setchicExperiment}}.}
 
-  \item{n} {The number of baits to plot (ignored if \code{baits} is specified). The differential landscape of n random unique baits will be displayed.}
+  \item{n}{The number of baits to plot (ignored if \code{baits} is specified). The differential landscape of n random unique baits will be displayed.}
 
-  \item{baits} {The IDs of particular baits to plot.}
+  \item{baits}{The IDs of particular baits to plot.}
 
-  \item{plotBaitNames} {plot the bait names at the top of the plots? TRUE by default.}
+  \item{plotBaitNames}{plot the bait names at the top of the plots? TRUE by default.}
 
-  \item{plotBaitIDs} {plot the bait IDs at the top of the plots? TRUE by default.} 
+  \item{plotBaitIDs}{plot the bait IDs at the top of the plots? TRUE by default.} 
   
-  \item{plevel1} {the hard score threshold = 5}
+  \item{plevel1}{the hard score threshold = 5}
 
-  \item{plevel2} {the soft score threshold = 3}
+  \item{plevel2}{the soft score threshold = 3}
 
-  \item{xlim} {the area around the bait to plot. By default it is set up to 1Mb in each direction.}
+  \item{xlim}{the area around the bait to plot. By default it is set up to 1Mb in each direction.}
 
-  \item{bgCol} {The color of background contacts. It is black by default.}
+  \item{bgCol}{The color of background contacts. It is black by default.}
 
-  \item{lev1Col} {The color of contacts that were call significant at least in one of the replicates of a corresponding condition. It is red by default.}
+  \item{lev1Col}{The color of contacts that were call significant at least in one of the replicates of a corresponding condition. It is red by default.}
 
-  \item{lev2Col} {The color of contacts that got a subthreshold score at least in one of the replicates of a corresponding condition. It is blue by default.}
+  \item{lev2Col}{The color of contacts that got a subthreshold score at least in one of the replicates of a corresponding condition. It is blue by default.}
   
-  \item{\dots} {Additional arguments passed to \code{\link{ggplot}}}
+  \item{\dots}{Additional arguments passed to \code{\link{ggplot}}}
   
 }
 

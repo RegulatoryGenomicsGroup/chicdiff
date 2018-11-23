@@ -12,7 +12,7 @@ chicestimateDistFun(x)
 }
 
 \arguments{
-  \item{x} {Chicago .Rds file read with \code{\link{readRDSorRDA}} }
+  \item{x}{Chicago .Rds file read with \code{\link{readRDSorRDA}}
 }
 }
 

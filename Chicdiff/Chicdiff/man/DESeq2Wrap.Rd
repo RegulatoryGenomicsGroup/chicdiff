@@ -12,10 +12,10 @@ DESeq2Wrap(defchic.settings, RU, FullRegionData, suffix = "")
 }
 
 \arguments{
-  \item{defchic.settings} {settings that were set up by running \code{\link{setchicExperiment}}}
-  \item{RU} {Region Universe set up by running \code{\link{getRegionUniverse}} or Control Region Universe set by by running \code{\link{getControlRegionUniverse}}}
-  \item{FullRegionData} {If running for RU -> FullRegionData[[1]] - Full Region Data for RU. If running for RUcontrol - use FullRegionData[[2]] - Full Region Data for RU control}
-  \item{suffix} {Optional: suffix to add to the name of the saved files}}
+  \item{defchic.settings}{settings that were set up by running \code{\link{setchicExperiment}}}
+  \item{RU}{Region Universe set up by running \code{\link{getRegionUniverse}} or Control Region Universe set by by running \code{\link{getControlRegionUniverse}}}
+  \item{FullRegionData}{If running for RU -> FullRegionData[[1]] - Full Region Data for RU. If running for RUcontrol - use FullRegionData[[2]] - Full Region Data for RU control}
+  \item{suffix}{Optional: suffix to add to the name of the saved files}
 }
 
 

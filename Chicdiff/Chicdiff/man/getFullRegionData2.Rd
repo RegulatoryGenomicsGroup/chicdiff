@@ -11,17 +11,17 @@ Recovers the full data for every region - contact from targetRDSorRDAs and chinp
 getFullRegionData2(defchic.settings, RU, RUcontrol, suffix = "")
 }
 \arguments{
-  \item{defchic.settings} {settings that were set up by running \code{\link{setchicExperiment}}}
-  \item{RU} {Region Universe set up by running \code{\link{getRegionUniverse}}}
-  \item{RUcontrol} {Control Region Universe set by by running \code{\link{getControlRegionUniverse}}}
-  \item{suffix} {Optional: suffix to add to the name of the saved files}}
+  \item{defchic.settings}{settings that were set up by running \code{\link{setchicExperiment}}}
+  \item{RU}{Region Universe set up by running \code{\link{getRegionUniverse}}}
+  \item{RUcontrol}{Control Region Universe set by by running \code{\link{getControlRegionUniverse}}}
+  \item{suffix}{Optional: suffix to add to the name of the saved files}
 }
 
 \value{
-  \item{FullregionData} {a list of 3 elements: [[1]] - FullRegionData for RU, [[2]] - FullRegionData for RUcontrol, [[3]] - countput, containing data for plotting}
-  \item{countput.Rds} {countput, containing data for plotting}
-  \item{FullRegionData.Rds} {FullRegionData for RU, if saveRDS is TRUE}
-  \item{FullControlRegionData.Rds} {FullControlRegionData for RUcontrol, if saveRDS is TRUE}
+  \item{FullregionData}{a list of 3 elements: [[1]] - FullRegionData for RU, [[2]] - FullRegionData for RUcontrol, [[3]] - countput, containing data for plotting}
+  \item{countput.Rds}{countput, containing data for plotting}
+  \item{FullRegionData.Rds}{FullRegionData for RU, if saveRDS is TRUE}
+  \item{FullControlRegionData.Rds}{FullControlRegionData for RUcontrol, if saveRDS is TRUE}
 }
 
 \author{

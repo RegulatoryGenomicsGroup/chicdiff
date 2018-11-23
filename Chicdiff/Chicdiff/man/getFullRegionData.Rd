@@ -14,17 +14,17 @@ getFullRegionData(defchic.settings, RU, RUcontrol, suffix = "")
 }
 
 \arguments{
-  \item{defchic.settings} {settings that were set up by running \code{\link{setchicExperiment}}}
-  \item{RU} {Region Universe set up by running \code{\link{getRegionUniverse}}}
-  \item{RUcontrol} {Control Region Universe set up by running \code{\link{getControlRegionUniverse3}}}
-  \item{suffix} {Control Region Universe set up by running \code{\link{getControlRegionUniverse3}}}
+  \item{defchic.settings}{settings that were set up by running \code{\link{setchicExperiment}}}
+  \item{RU}{Region Universe set up by running \code{\link{getRegionUniverse}}}
+  \item{RUcontrol}{Control Region Universe set up by running \code{\link{getControlRegionUniverse3}}}
+  \item{suffix}{Control Region Universe set up by running \code{\link{getControlRegionUniverse3}}}
 }
 
 \value{
-  \item{FullregionData} {a list of 3 elements. [[1]] - FullRegionData for RU, [[2]] - FullRegionData for RUcontrol, [[3]] - countput, containing data for plotting}
-  \item{countput.Rds} {countput, containing data for plotting}
-  \item{FullRegionData.Rds} { FullRegionData for RU, if saveRDS is TRUE}
-  \item{FullControlRegionData.Rds} { FullControlRegionData for RUcontrol, if saveRDS is TRUE}
+  \item{FullregionData}{a list of 3 elements. [[1]] - FullRegionData for RU, [[2]] - FullRegionData for RUcontrol, [[3]] - countput, containing data for plotting}
+  \item{countput.Rds}{countput, containing data for plotting}
+  \item{FullRegionData.Rds}{ FullRegionData for RU, if saveRDS is TRUE}
+  \item{FullControlRegionData.Rds}{ FullControlRegionData for RUcontrol, if saveRDS is TRUE}
 }
 
 \author{
