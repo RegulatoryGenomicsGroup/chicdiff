@@ -180,38 +180,58 @@ Finally, we run the pipeline with ``chicdiffPipeline()``:
 output <- chicdiffPipeline(defchic.settings)
 ```
 
-## Output plots
+## Output plots 
 
 ``chicdiffPipeline()`` produces a number of plots, that are saved in the working directory.
 
-The plots produced by Chicdiff for the chr19 datasets are provided in the *ChicdiffData* package and can be vizualized in the following way: 
+The plots produced by Chicdiff for the chr19 datasets are provided in the *ChicdiffData* package.
+Note that the diagnostic plots above are computed using only a small fraction of the full CD4 and Monocyte datasets. In real-world, genome-wide datasets the trends described below should be more pronounced. 
 
+### Output diagnostic plots
+
+Below we describe the expected properties of the diagnostic plots, showing whether the criteria for the covariates are applicable.
+
+#### Decision boundary
 ```{r}
 resultsPath <- file.path(dataPath, "CD4_Mono_results")
 
 IHWdecisionBoundaryPlot <- readPNG(file.path(resultsPath,"IHWdecisionBoundaryPlot.png"))
 grid::grid.raster(IHWdecisionBoundaryPlot)
+```
+ 
+This plot shows the implied decision boundaries for the unweighted p-values, as a function of the covariate. It shows whether the covariate (distance) in the control dataset is informative of the power under the alternative.
 
+The trend is: low p-values are enriched at low covariate values. The higher the covariate values, the higher are the pvalues. This indicates that the distance covariate is correlated with power under the alternative.
+
+#### Estimated weights
+```{r}
 IHWweightPlot <- readPNG(file.path(resultsPath,"IHWweightPlot.png"))
 grid::grid.raster(IHWweightPlot)
 ```
 
-### ### Interpreting the plots
+We see that the general trend is driven by the covariate (stratum) (distance in our case). As expected, the weight functions calculated on different random subsets (folds) of the data behave similarly. For the chr19 data at hand, interactions acros longer distances get penalized and are assigned with a lower weight, while interactions over shorter distances get prioritized.
 
-Below we describe the expected properties of the diagnostic plots, showing whether the criteria for the covariates are applicable.
+### Differential contact plots
 
-Note that the diagnostic plots above are computed using only a small fraction of the full CD4 and Monocyte datasets. In real-world, genome-wide datasets the trends described below should be more pronounced.
+If the option *plot* in the defchic.settings was marked as TRUE (that is by default set up to TRUE), chicdiff will produce for random plots from the top 100 interactions with the lowest weighted pvalue.
 
-1. *IHW decision boundary plot*: This plot shows whether the covariate (distance) in the control dataset is informative of the power under the alternative, and thus the IHW can be used.
 
-The trend is: low p-values are enriched at low covariate values. The higher the covariate values, the higher are the pvalues. This indicates that the distance covariate is correlated with power under the alternative.
+library("animation")
 
-2. *Technical noise estimates*: The mean number of technical noise reads expected for other ends and baits, respectively, per pools of fragments. These pools, displayed on the x axis, again refer to the number of trans-chromosomal reads that the fragments accumulate.
 
-- The distributions' median and variance should trend upwards as we move from left to right.
-- In the lower subplot, the bait-to-bait estimates (here, the four bars on the far right) should be higher, on average, than the others. Both groups should also have medians and variances that trend upwards, moving from left to right.
+pdf("bm.pdf")
+plot(1:10)
+dev.off()
 
-3. *Distance function*: The mean number of Brownian reads expected for an ``average`` bait, as a function of distance, plotted on a log-log scale.
+im.convert("bm.pdf", output = "bm.jpeg")
+im.convert("bm.pdf", output = "bm.png")
 
-- The function should monotonically decrease.
-- The curve should fit the points reasonably well.
+IHWweightPlot <- readPNG(file.path(resultsPath,"diffbaitPlot.pdf"))
+grid::grid.raster(IHWweightPlot)
+```
+```{r}
+library(Biobase)
+resultsPath <- file.path(dataPath, "CD4_Mono_results")
+openPDF(file.path(resultsPath,"diffbaitPlot.pdf"))
+```
+
