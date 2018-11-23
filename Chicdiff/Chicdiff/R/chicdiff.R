@@ -14,6 +14,7 @@ defaultchicSettings <- function()
      score= 5, #Give more informative name (see getRegionUniverse())
      saveRDS = TRUE,
      parallel = FALSE,
+     format = "PNG"
      printMemory = TRUE
    )
  }
@@ -1767,10 +1768,11 @@ plotdiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, pl
 #---------------------------------------------------#
 
 IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutControl, FullControlRegionData,
-                          countput, DiagPlot = TRUE, diffbaitPlot = TRUE, suffix = ""){
+                          countput, DiagPlot = TRUE, diffbaitPlot = TRUE, device = device, suffix = ""){
   
   saveRDS = defchic.settings[["saveRDS"]]
   baitmapfile = defchic.settings[["baitmapfile"]]
+  device = defchic.settings[["device"]]
   
   out <- DESeqOut ##DESeqOut and DESeqOutControl
   RU.recast <- FullRegionData ##FullRegionData and FullControlRegionData
@@ -1870,7 +1872,7 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
     sel <- order(out$weighted_pvalue)
     baits <- sample(head(unique(out[sel]$baitID), 100), 4)
     plotdiffBaits(output = out, countput = countput, baitmapfile = baitmapfile, baits = baits)
-    ggsave("diffbaitPlot.pdf", device = "pdf", path = "./")
+    ggsave(paste0("diffbaitPlot",".",format), device = device, path = "./")
     dev.off()
   }
   

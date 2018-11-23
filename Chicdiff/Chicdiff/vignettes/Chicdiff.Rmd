@@ -176,7 +176,7 @@ defchic.settings <- setchicExperiment(designDir = testDesignDir, targetRDSorRDAs
 
 Finally, we run the pipeline with ``chicdiffPipeline()``:
 
-```{r, eval=FALSE}
+```{r}
 output <- chicdiffPipeline(defchic.settings)
 ```
 
@@ -213,25 +213,10 @@ We see that the general trend is driven by the covariate (stratum) (distance in 
 
 ### Differential contact plots
 
-If the option *plot* in the defchic.settings was marked as TRUE (that is by default set up to TRUE), chicdiff will produce for random plots from the top 100 interactions with the lowest weighted pvalue.
+Chicdiff produces a plot, showing four random baits, from the top 100 baits, containing interactions with the lowest weighted pvalue.
 
-
-library("animation")
-
-
-pdf("bm.pdf")
-plot(1:10)
-dev.off()
-
-im.convert("bm.pdf", output = "bm.jpeg")
-im.convert("bm.pdf", output = "bm.png")
-
-IHWweightPlot <- readPNG(file.path(resultsPath,"diffbaitPlot.pdf"))
-grid::grid.raster(IHWweightPlot)
-```
 ```{r}
-library(Biobase)
-resultsPath <- file.path(dataPath, "CD4_Mono_results")
-openPDF(file.path(resultsPath,"diffbaitPlot.pdf"))
+IHWweightPlot <- readPNG(file.path(resultsPath,"diffbaitPlot.png"))
+grid::grid.raster(IHWweightPlot)
 ```
 
