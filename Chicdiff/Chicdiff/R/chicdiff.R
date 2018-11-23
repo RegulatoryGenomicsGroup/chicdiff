@@ -1872,7 +1872,7 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
     sel <- order(out$weighted_pvalue)
     baits <- sample(head(unique(out[sel]$baitID), 100), 4)
     plotdiffBaits(output = out, countput = countput, baitmapfile = baitmapfile, baits = baits)
-    ggsave(paste0("diffbaitPlot",".",format), device = device, path = "./")
+    ggsave(paste0("diffbaitPlot",".",device), device = device, path = "./")
     dev.off()
   }
   
