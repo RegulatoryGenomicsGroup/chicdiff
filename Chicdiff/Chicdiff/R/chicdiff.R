@@ -14,7 +14,7 @@ defaultchicSettings <- function()
      score= 5, #Give more informative name (see getRegionUniverse())
      saveRDS = TRUE,
      parallel = FALSE,
-     format = "PNG"
+     format = "PNG",
      printMemory = TRUE
    )
  }
