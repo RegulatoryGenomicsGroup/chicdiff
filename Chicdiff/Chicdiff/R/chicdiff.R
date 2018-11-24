@@ -14,7 +14,7 @@ defaultchicSettings <- function()
      score= 5, #Give more informative name (see getRegionUniverse())
      saveRDS = TRUE,
      parallel = FALSE,
-     format = "PNG",
+     device = "png",
      printMemory = TRUE
    )
  }
@@ -1768,7 +1768,7 @@ plotdiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, pl
 #---------------------------------------------------#
 
 IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutControl, FullControlRegionData,
-                          countput, DiagPlot = TRUE, diffbaitPlot = TRUE, device = device, suffix = ""){
+                          countput, DiagPlot = TRUE, diffbaitPlot = TRUE, suffix = ""){
   
   saveRDS = defchic.settings[["saveRDS"]]
   baitmapfile = defchic.settings[["baitmapfile"]]
