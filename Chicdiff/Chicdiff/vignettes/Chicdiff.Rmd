@@ -46,7 +46,8 @@ In this vignette, we use the Naive CD4+ T cells and Monocytes data [@Javierre201
 
 ```{r, message=FALSE}
 library(Chicdiff)
-library(ChicdiffData)
+source("/bi/group/sysgen/malysheva/github_working_dir/chicdiff/Chicdiff/ChicdiffData/")
+#library(ChicdiffData)
 ```
 
 
@@ -173,7 +174,7 @@ defchic.settings <- setchicExperiment(designDir = testDesignDir, targetRDSorRDAs
 
 Finally, we run the pipeline with ``chicdiffPipeline()``:
 
-```{r, eval = FALSE}
+```{r}
 output <- chicdiffPipeline(defchic.settings)
 ```
 
@@ -192,7 +193,7 @@ Below we describe the expected properties of the diagnostic plots, showing wheth
 ```{r}
 resultsPath <- file.path(dataPath, "CD4_Mono_results")
 
-IHWdecisionBoundaryPlot <- readPNG(file.path(resultsPath,"IHWdecisionBoundaryPlot.png"))
+IHWdecisionBoundaryPlot <- png::readPNG(file.path(resultsPath,"IHWdecisionBoundaryPlot.png"))
 grid::grid.raster(IHWdecisionBoundaryPlot)
 ```
  
@@ -202,7 +203,7 @@ The trend is: low p-values are enriched at low covariate values. The higher the 
 
 #### Estimated weights
 ```{r}
-IHWweightPlot <- readPNG(file.path(resultsPath,"IHWweightPlot.png"))
+IHWweightPlot <- png::readPNG(file.path(resultsPath,"IHWweightPlot.png"))
 grid::grid.raster(IHWweightPlot)
 ```
 
@@ -213,7 +214,7 @@ We see that the general trend is driven by the covariate (stratum) (distance in 
 Chicdiff produces a plot, showing four random baits, from the top 100 baits, containing interactions with the lowest weighted pvalue.
 
 ```{r}
-IHWweightPlot <- readPNG(file.path(resultsPath,"diffbaitPlot.png"))
+IHWweightPlot <- png::readPNG(file.path(resultsPath,"diffbaitPlot.png"))
 grid::grid.raster(IHWweightPlot)
 ```
 
