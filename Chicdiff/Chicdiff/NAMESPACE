@@ -5,4 +5,8 @@ import(data.table)
 import(Chicago)
 import(IRanges)
 import(DESeq2)
+import(ggplot2)
+import(hexbin)
+import(cowplot)
+import(png)
 
