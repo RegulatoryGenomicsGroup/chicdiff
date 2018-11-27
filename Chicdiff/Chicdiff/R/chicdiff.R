@@ -1881,3 +1881,21 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
   }
   return(out)
 }
+
+
+getCandidateInteractions <- function(output, countput, pvcut){
+  
+  peakFiles <- fread(peakFiles)
+  output <- readRDS(output)
+  
+  res <- output[weighted_pvalue < pvcut]
+  setkey(res, baitID, minOE, maxOE)
+  
+  peakFiles <- peakFiles[,oeID1:=oeID]
+  
+  outpeak <- foverlaps(peakFiles, res, by.x=c("baitID", "oeID", "oeID1"), by.y=c("baitID", "minOE", "maxOE"), nomatch =0, mult = "all")
+  #fwrite(outpeak, "./outpeak.txt")
+}
+
+
+

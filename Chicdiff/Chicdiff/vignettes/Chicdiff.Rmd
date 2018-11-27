@@ -46,8 +46,7 @@ In this vignette, we use the Naive CD4+ T cells and Monocytes data [@Javierre201
 
 ```{r, message=FALSE}
 library(Chicdiff)
-source("/bi/group/sysgen/malysheva/github_working_dir/chicdiff/Chicdiff/ChicdiffData/")
-#library(ChicdiffData)
+library(ChicdiffData)
 ```
 
 
@@ -174,22 +173,18 @@ defchic.settings <- setchicExperiment(designDir = testDesignDir, targetRDSorRDAs
 
 Finally, we run the pipeline with ``chicdiffPipeline()``:
 
-```{r}
+```{r, eval=FALSE}
 output <- chicdiffPipeline(defchic.settings)
 ```
 
-## Output plots 
+## Output diagnostic plots 
 
 ``chicdiffPipeline()`` produces a number of plots, that are saved in the working directory.
 
 The plots produced by Chicdiff for the chr19 datasets are provided in the *ChicdiffData* package.
-Note that the diagnostic plots above are computed using only a small fraction of the full CD4 and Monocyte datasets. In real-world, genome-wide datasets the trends described below should be more pronounced. 
+Note that the diagnostic plots are computed using only a small fraction of the full CD4 and Monocyte datasets. In real-world, genome-wide datasets the trends described below should be more pronounced. 
 
-### Output diagnostic plots
-
-Below we describe the expected properties of the diagnostic plots, showing whether the criteria for the covariates are applicable.
-
-#### Decision boundary
+### Decision boundary
 ```{r}
 resultsPath <- file.path(dataPath, "CD4_Mono_results")
 
@@ -201,7 +196,7 @@ This plot shows the implied decision boundaries for the unweighted p-values, as 
 
 The trend is: low p-values are enriched at low covariate values. The higher the covariate values, the higher are the pvalues. This indicates that the distance covariate is correlated with power under the alternative.
 
-#### Estimated weights
+### Estimated weights
 ```{r}
 IHWweightPlot <- png::readPNG(file.path(resultsPath,"IHWweightPlot.png"))
 grid::grid.raster(IHWweightPlot)
@@ -209,12 +204,40 @@ grid::grid.raster(IHWweightPlot)
 
 We see that the general trend is driven by the covariate (stratum) (distance in our case). As expected, the weight functions calculated on different random subsets (folds) of the data behave similarly. For the chr19 data at hand, interactions acros longer distances get penalized and are assigned with a lower weight, while interactions over shorter distances get prioritized.
 
-### Differential contact plots
+# Vizualizing differential interactions
 
-Chicdiff produces a plot, showing four random baits, from the top 100 baits, containing interactions with the lowest weighted pvalue.
+The plotdiffBaits() function can be used to plot the raw read counts versus linear distance from bait, mirrored for compared conditions. Significant Interactions are represented as intervals, labelled in a different colour, according to the attributed weighted pvalue.
 
 ```{r}
 IHWweightPlot <- png::readPNG(file.path(resultsPath,"diffbaitPlot.png"))
 grid::grid.raster(IHWweightPlot)
+```
+
+By default Chicdiff produces a plot, showing four random baits from the top 100 baits, containing interactions with the lowest weighted pvalue. Interactions within 1 Mb from bait are shown, with those passing the threshold of 5 colored in red and those passing the more lenient threshold of 3 shown in blue. Those interactions that are passing the threshold of 5 go through the Chicdiff pipeline. To gain the statistical power the otherEnd under evaluation will be expanded to an interval, which will be compared between conditions. Thus the weighted pvalue correpsonds not to an individual interaction but to an interaction of bait with an interval and is the result of several interactions withing that interval.
+
+Using the final Chicdiff output file, countput and the baitmap as inputs to *plotdiffBaits()* function the user can modify the number of baits to display or provide a set of defind baits to plot, as well as change the display parameters, such as color of interactions, the distance around the bait to display and others (see documentation of *plotdiffBaits*).
+
+```{r, warning=FALSE}
+mini_output <- readRDS(file.path(resultsPath, "06Weighted.Rds"))
+mini_countput <- readRDS(file.path(resultsPath, "countput.Rds"))
+bmap <- fread(file.path(testDesignDir, "chr19_GRCh37_HindIII.baitmap"))
+
+baits <- c(331172, 320562, 327700)
+plotdiffBaits(output = mini_output, countput = mini_countput, baitmapfile = bmap, baits = baits)
+```
+
+# Association of the interaction interval with the *seed* otherEnd 
+
+It is important to keep in mind that weighted_pvalue produced by Chicdiff correpsonds not to an individual interaction but to an interaction of bait with an interval and is the result of several interactions withing that interval.
+
+To have an idea of fragments which interaction with the bait of interest contributed to the weighted pvalue users can user *getCandidateInteractions()* function.
+
+```{r}
+output = file.path(resultsPath, "06Weighted.Rds")
+peakFiles = file.path(dataPath, "peakMatrix_cd4_mono_unmerged.txt")
+
+outpeak <- getCandidateInteractions(output = output, countput = countput, pvcut = 0.05)
+
+head(outpeak)
 ```
 
