@@ -1883,7 +1883,7 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
 }
 
 
-getCandidateInteractions <- function(output, countput, pvcut){
+getCandidateInteractions <- function(output, peakFiles, pvcut){
   
   peakFiles <- fread(peakFiles)
   output <- readRDS(output)
