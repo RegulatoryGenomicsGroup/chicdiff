@@ -221,7 +221,6 @@ bmap <- fread(file.path(testDesignDir, "chr19_GRCh37_HindIII.baitmap"))
 
 baits <- c(331172, 320562, 327700)
 plotdiffBaits(output = mini_output, countput = mini_countput, baitmapfile = bmap, baits = baits)
-save
 ```
 
 # Association of the interaction interval with the *seed* otherEnd 

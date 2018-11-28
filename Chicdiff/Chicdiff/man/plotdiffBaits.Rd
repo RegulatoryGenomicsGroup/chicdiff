@@ -12,7 +12,7 @@ plotdiffBaits(output, countput, baitmapfile, n = 3, baits = NULL, plotBaitNames 
 }
 
 \arguments{
-  \item{output}{final output of IHW function, containing all the information about the bait - other end - region: coordinates, counts, log2FoldChange, DESeq pvalue, weight and weighted pvalue and lots of other data.}
+  \item{output}{final output of IHW function, containing all the information about a bait - region interaction: coordinates, counts, log2FoldChange, DESeq pvalue, weight and weighted pvalue and lots of other data.}
   
   \item{countput}{countput file, containing counts recovered from the .Rda Chicago files, produced in  \code{\link{getFullRegionData1}} or \code{\link{getFullRegionData2}}.}
 
@@ -47,17 +47,25 @@ plotdiffBaits(output, countput, baitmapfile, n = 3, baits = NULL, plotBaitNames 
 
 
 \author{
-Jonathan Cairns, Will Orchard, Valeriya Malysheva and Mikhail Spivakov
+Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 
 \seealso{
-  \code{\link{setchicExperiment}}, \code{\link{getFullRegionData1}}, \code{\link{getFullRegionData2}}, \code{\link{IHWcorrection}}
+  \code{\link{setChicExperiment}}, \code{\link{getFullRegionData1}}, \code{\link{getFullRegionData2}}, \code{\link{IHWcorrection}}
 }
 
 \examples{
-#load here the output and countput...and dedault settings...
+#load the output and countput
+dataPath <- system.file("extdata", package="ChicdiffData")
+resultsPath <- file.path(dataPath, "CD4_Mono_results")
 
-plotdiffBaits(output = out, countput = countput, n = 4, baitmapfile = baitmapfile)
+mini_output <- readRDS(file.path(resultsPath, "06Weighted.Rds"))
+mini_countput <- readRDS(file.path(resultsPath, "countput.Rds"))
+bmap <- fread(file.path(testDesignDir, "chr19_GRCh37_HindIII.baitmap"))
+baits <- c(331172, 320562, 327700)
+
+#plot bait interactions
+plotdiffBaits(output = mini_output, countput = mini_countput, baitmapfile = bmap, baits = baits)
 
 # if you want to save the plot:
 ggsave("diffbaitPlot.pdf", device = "pdf", path = "./")

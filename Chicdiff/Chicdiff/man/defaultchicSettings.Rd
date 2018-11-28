@@ -26,7 +26,7 @@
   \item{printMemory}{Default: TRUE. A garbage collection and print of memory usage statistics.}
 }
 \author{
-  Jonathan Cairns, Will Orchard, Valeriya Malysheva and Mikhail Spivakov
+  Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 \seealso{
   \code{\link{setChicExperiment}}, \code{\link{.updateChicSettings}}
