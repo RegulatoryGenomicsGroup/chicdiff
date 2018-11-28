@@ -1713,7 +1713,8 @@ plotdiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, pl
       p1 <- p1 + ggtitle(chroms_bait[i][,baitID])
     }
     
-    p2 <- ggplot(count_temp[condition == conditions[[2]]], aes(oeID_mid, Nav)) +
+    
+      p2 <- ggplot(count_temp[condition == conditions[[2]]], aes(oeID_mid, Nav)) +
       geom_point(aes(colour=big_score, alpha = 0.4, stroke = 0)) + 
       scale_colour_manual(values = c(bgCol, lev2Col, lev1Col)) +
       geom_line(aes(oeID_mid, Bav)) +
@@ -1758,12 +1759,12 @@ plotdiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, pl
       theme_void() +
       theme(legend.position = "none")
     
-    plot_list[[i]] <- plot_grid(p1, pvalue_plot, p2, align = "v", nrow = 3, rel_heights = c(1/2, 1/8, 1/2))
+    suppressWarnings(plot_list[[i]] <- plot_grid(p1, pvalue_plot, p2, align = "v", nrow = 3, rel_heights = c(1/2, 1/8, 1/2)))
   }
   
-  chicdiffPlots <- plot_grid(plotlist = plot_list, align = "h")
-  scalebar_grid <- plot_grid(get_legend(scalebar))
-  plot_grid(chicdiffPlots, scalebar_grid, rel_widths = c(10, 1), ...)
+  suppressWarnings(chicdiffPlots <- plot_grid(plotlist = plot_list, align = "h"))
+  suppressWarnings(scalebar_grid <- plot_grid(get_legend(scalebar)))
+  suppressWarnings(plot_grid(chicdiffPlots, scalebar_grid, rel_widths = c(10, 1), ...))
 }
 
 #---------------------------------------------------#
