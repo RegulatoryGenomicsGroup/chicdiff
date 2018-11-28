@@ -3,7 +3,7 @@ exportPattern(".")
 
 import(data.table)
 import(Chicago)
-importFrom(IRanges, IRanges, disjointBins)
+importFrom(IRanges, IRanges, disjointBins, start, end)
 import(DESeq2)
 import(ggplot2)
 import(hexbin)
