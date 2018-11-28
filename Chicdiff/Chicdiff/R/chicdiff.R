@@ -1832,7 +1832,7 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
 }
 
 
-getCandidateInteractions <- function(defchic.settings, output, peakFiles, pvcut){
+getCandidateInteractions <- function(defchic.settings, output, peakFiles, pvcut, deltaAsinhScore){
   
   targetRDSorRDAs = defchic.settings[["targetRDSorRDAs"]]
   peakFiles <- fread(peakFiles)
@@ -1851,13 +1851,23 @@ getCandidateInteractions <- function(defchic.settings, output, peakFiles, pvcut)
   outpeak[,cond1mean:=NULL]
   outpeak[,cond2mean:=NULL]
   
-  outpeak<- outpeak[delta > 1]
+  outpeak<- outpeak[delta > deltaAsinhScore]
   
-  final <- outpeak[,list(OEstart = OEstart[1], OEend=OEend[1], baitChr=baitChr[1], baitstart=baitstart[1], 
-                         baitend = baitend[1],
-                         weighted_pvalue = weighted_pvalue[1], baitName = baitName[1],condidates = paste(oeID, collapse=",")), 
-                   by=c("baitID", "regionID")]
-  
+  # This is to include the columns whose names are listed in names(targetRDSorRDAs[[n]]) and are unknown a priori
+  expr = paste0('list( 
+                baitChr=baitChr[1], baitstart=baitstart[1], 
+                baitend = baitend[1], baitName = baitName[1],',
+                paste(names(targetRDSorRDAs[[1]]), collapse=","), ",",
+                paste(names(targetRDSorRDAs[[2]]), collapse=","), 
+                ', deltaAsinhScore = delta[1],
+              regionIDs = paste(regionID, collapse=","),
+              log2FoldChanges = paste(log2FoldChange, collapse = ","),
+              weighted_pvalues = paste(weighted_pvalue, collapse = ","),  
+              OEranges = paste(OEstart, OEend, sep = "-", collapse= ","))
+              ')
+  # view with parse(text=expr)  
+  final <- outpeak[, eval(parse(text=expr)),  by=c("baitID", "oeID")]
+
+  final
   
 }
-
