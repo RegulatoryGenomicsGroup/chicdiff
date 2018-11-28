@@ -138,10 +138,7 @@ setChicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
   message("Checking the design files...")
   
   baitmapfile = Chicago:::.readBaitmap(defchic.settings)
-  if(ncol(baitmapfile)<max(c(defchic.settings[["baitmapFragIDcol"]], defchic.settings[["baitmapGeneIDcol"]]))){
-    stop("There are fewer columns in the baitmapfile than expected. Check that this file lists the genomic coordinates as well as both the IDs and names for each baited fragment,
-         and that the corresponding columns are specified in baitmapFragIDcol and baitmapGeneIDcol, respectively.")
-  }
+
   rmapfile = Chicago:::.readRmap(defchic.settings)
   if (ncol(rmapfile)<4){
     stop("There are fewer columns in the rmap file than expected. This file should have 4 columns, listing the genomic coordinates and IDs for each restriction fragment.")
@@ -553,7 +550,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
   ##1) Read in each file...
   for(i in 1:length(targetRDSorRDAFiles))
   {
-    message("File ",i, " of ", length(targetRDSorRDAFiles))
+    message("\nReading Chicago dataset ",i, " of ", length(targetRDSorRDAFiles), " : ", names(targetRDSorRDAFiles)[i])
     file <- targetRDSorRDAFiles[i]
     #load(file) ##this produces the object 'x' --old 
     x <- readRDSorRDA(file)
@@ -567,20 +564,21 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
       setDT(x)
     }
     
-    message("Finished reading")
+    # message("Finished reading")
     
     
     ##1b) collect the Bmean, Tmean information that is present
+    
+    message("Collecting Bmean and Tmean")
     
     setkey(x, baitID, otherEndID)
     setkey(RU_IntParams, baitID, otherEndID)
     out <- x[RU_IntParams, c("baitID", "otherEndID","distSign","Bmean", "Tmean", "score"), with=FALSE]
     ##(note that score=NA occurs when N=0 - hence replace score=0)
     
-    message("Collected Bmean and Tmean")
-    
     
     ##1c) recalculate distSign (need to do this for control regions)
+    message("Recalculating distSign")
     if(any(is.na(out$distSign)))
     {
       rmap <- Chicago:::.readRmap(list(rmapfile=rmapfile))
@@ -597,67 +595,57 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
       out$distSign <- temp$distSign
     }
     
-    message("Recalculated distSign")
-    
-    
     ##1d) bait annotation: collect s_js, tblb
     ##Note that s_j can be NA (for baits that were filtered out!)
+    message("Collecting bait parameters (s_j and tblb)")
     temp <- x[,list(s_j=s_j[1], tblb=tblb[1]),by="baitID"]
     setkey(temp, baitID)
     setkey(out, baitID)
     out <- merge(out, temp, all.x=TRUE)
     
-    message("Collected s_js and tblb")
-    
-    
     ##1e) OE annotation: collect s_is, tlb
     ##s_i not allowed to be NA - just assume 1.
     ## => s_i should be 0)
+    message("Collecting other end parameters (s_i and tlb)")
     temp <- x[,list(s_i=s_i[1], tlb=tlb[1]),by="otherEndID"]
     setkey(temp, otherEndID)
     setkey(out, otherEndID)
     out <- merge(out, temp, all.x=TRUE)
     out[is.na(s_i),s_i:=1] 
     setkey(out, baitID, otherEndID)
-    
-    message("Collected s_is and tlb")
-    
+  
     
     ##1f) reconstruct Tmean information
+    message("Collecting Tmean")
     setkey(x, tlb, tblb)
     setkey(out, tlb, tblb)
     temp <- x[,Tmean[1],by=c("tblb", "tlb")]
     setnames(temp, "V1", "Tmean")
     out[,Tmean:=NULL]
     out <- merge(out, temp, all.x=TRUE)
-    
-    message("Found Tmean")
-    
-    
+  
     ##1g) impute some of the missing Tmeans
     ##    missing tlb suggests that the other end was rarely observed, so assume lowest
     ##    Tmean corresponding to the appropriate tblb.
+    message("Imputing missing Tmeans")
     templowest <- temp[,c(Tmean = min(Tmean)),by="tblb"]
     tempDictionary <- templowest$V1
     names(tempDictionary) <- templowest$tblb
     out[is.na(tlb) & !is.na(tblb), Tmean := tempDictionary[tblb]]
     
-    message("Imputed missing Tmean")
-    
-    
     ##2) Reconstruct the distance function from distbin info
+    message("Reconstructing the distance function")
     distFunParams <- chicestimateDistFun(x)
     
     ##3) Reconstruct Bmean information (But!! When s_j = NA,
     ##   ensure that Bmean comes out as NA too.)
+    message("Reconstructing Bmean")
     out <- Chicago:::.estimateBMean(out, distFunParams)
     out[is.na(s_j),Bmean:=NA]
     setkey(out, baitID, otherEndID)
     
     outData[[i]] <- out
-    
-    message("Estimated Bmean")
-    
+  
     
     if(!is_control){
       rmap_copy <- copy(rmap)
@@ -678,7 +666,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
       x <- merge(x, rmap_copy, by= "otherEndID")
       gc()
       
-      message("Assigning conditions")
+      #message("Assigning conditions")
       for(n in 1:length(countput)){
         if(conditions[[i]] == names(countput)[[n]]){
           countput[[n]][[i]] <- x
@@ -689,7 +677,9 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
     }
     
     #This just keeps all of the loaded RDAs if we still need them for the count data because we don't have chinputs
+
     if(is.null(targetChs)){ 
+
       x <- x[, c("baitID", "otherEndID", "N"), with = FALSE]
       columnNames <- paste0("N.", names(targetRDSorRDAFiles))
       setnames(x, old="N", new=columnNames[i])
@@ -698,12 +688,15 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
       rm(x)
     }
     
-    message("Saved counts")
     
     
   }
   
+  message("")
+  
   if(!is_control){
+    message("Saving counts\n")
+        
     for(i in 1:length(countput)){
       countput[[i]] <- rbindlist(countput[[i]])
       gc()
@@ -718,14 +711,14 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
     saveRDS(countput, "countput.Rds")
   }
   
-  message("between (1)")
-  
+
   message("out of iterative reading function")
-  
   
   baits <- sort(unique(RU$baitID)) ##baits to get information from
   
   if(is.null(targetChs)){
+    message("Reconstructing countData")
+    
     gc()
     mergedFiles <- Reduce(merge, tempForCounts)
 
@@ -735,16 +728,16 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
       setkey(countData[[i]], baitID)
       countData[[i]] <- countData[[i]][J(baits),]
       setkey(countData[[i]], baitID)
-      
-      message("countData info collected")
-      
     }
     
     x <- RU
     setkey(x, baitID, otherEndID)
+
+    message("Merging countData")
     
     for(i in seq_along(countData))
     {
+
       temp <- countData[[i]] 
       setnames(temp, old = columnNames[i], new = "N")
       setkey(temp, baitID, otherEndID)
@@ -752,11 +745,9 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
       x[is.na(N), N:=0]
       setnames(x, old="N", new=columnNames[i])
       
-      message("countData info merged")
-      
     }
     
-    message("no chinput case finished")
+    # message("no chinput case finished")
     
   }
   
@@ -772,12 +763,13 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
   
   ##2) Collect all of the read count information ----------------
   if(!is.null(targetChs)){
-    
+
+    message("")
     countData <- vector("list", length(targetChFiles))
     gc()
     for(i in 1:length(countData))
     {
-      #message(i, "\n")
+      message("Reading count data for ", names(targetChFiles)[i])
       x <- fread(targetChFiles[i])
       setkey(x, baitID)
 
@@ -787,7 +779,6 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
       countData[[i]] <- x
       rm(x)
       
-      message("Finished reading of chinputs")
       
       gc()
     }
@@ -807,7 +798,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
       x[is.na(N), N:=0]
       setnames(x, old="N", new=columnName)
       
-      message("count the number of reads in each replicate for CountOut")
+      #message("count the number of reads in each replicate for CountOut")
       
     }
     
@@ -816,6 +807,9 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
   ##3) Collect distance -----------------
   
   ##3a) Distance ------------
+
+  message("\nCollecting distances for CountOut")
+  
   rmap <- Chicago:::.readRmap(list(rmapfile=rmapfile))
   colnames(rmap) <- c("chr","start","end","fragID")
   setkey(rmap, fragID)
@@ -832,11 +826,11 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
              NA)]
   x[, c("chr.x","midpoint.x","chr.y","midpoint.y"):=NULL]
   
-  message("collected distances for CountOut")
-  
   
   CountOut <- x
-  
+
+  message("Processing count data")
+
   setkey(CountOut, baitID, otherEndID)
   
   for(i in 1:length(targetRDSorRDAFiles))
@@ -856,7 +850,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
     
     CountOut <- merge(CountOut, temp, all.x=TRUE)
     
-    message("count + interaction parameter data together")
+    #message("count + interaction parameter data together")
     
   }
   
@@ -875,13 +869,13 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
   
   setkey(recast, regionID)
   
-  message("recast")
+  #message("recast")
   
   
   if(saveRDS == TRUE){
-    saveRDS(recast, paste0("./FullRegionData", suffix, ".Rds"))
+    message("Saving FullRegionData")
     
-    message("saved FullRegionData")
+    saveRDS(recast, paste0("./FullRegionData", suffix, ".Rds"))
     
   }
   
@@ -897,7 +891,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
 }
 
 
-#---------------------------First the version which acts on (non)control in parallel-------------#
+#--------------------------- The version which reads significant and control interactions in parallel-------------#
 
 getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
   
@@ -938,31 +932,31 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
   ##1) Read in each file...
   for(i in 1:length(targetRDSorRDAFiles))
   { 
-    message("File ",i, " of ", length(targetRDSorRDAFiles))
+    message("\nReading Chicago dataset ",i, " of ", length(targetRDSorRDAFiles), " : ", names(targetRDSorRDAFiles)[i])
     file <- targetRDSorRDAFiles[i]
     x <- readRDSorRDA(file)
     ##1a) collect the dispersion
     
     if("chicagoData" %in% class(x)){
-      dispersions[i] <- x@params$dispersion
-      x <- as.data.table(x@x)
-    } else{
-      dispersions[i] <- attributes(x)$dispersion
-      setDT(x)
-    }
-    
-    message("Finished reading")
+        dispersions[i] <- x@params$dispersion
+        x <- as.data.table(x@x)
+      } else{
+        dispersions[i] <- attributes(x)$dispersion
+        setDT(x)
+      }
+
+    #message("Finished reading")
     
     
     ##1b) collect the Bmean, Tmean information that is present
+    message("Collecting Bmean and Tmean")
+    
     setkey(x, baitID, otherEndID)
     setkey(RU_IntParams, baitID, otherEndID)
     setkey(RUcontrol_IntParams, baitID, otherEndID)
     out <- x[RU_IntParams, c("baitID", "otherEndID","distSign","Bmean", "Tmean", "score"), with=FALSE]
     outControl <- x[RUcontrol_IntParams, c("baitID", "otherEndID","distSign","Bmean", "Tmean", "score"), with=FALSE]
-    
-    message("Collected Bnmean and Tmean")
-    
+
     #New lines above to produce outControl in the same way as out sis produced
     
     ##(note that score=NA occurs when N=0 - hence replace score=0)
@@ -970,6 +964,8 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     ##1c) recalculate distSign (need to do this for control regions)
     if(any(is.na(out$distSign)))
     {
+      message("Recalculating distSign for significant interactions")
+      
       rmap <- Chicago:::.readRmap(list(rmapfile=rmapfile))
       colnames(rmap) <- c("chr", "start", "end", "ID")
       setkey(rmap, "ID")
@@ -983,13 +979,12 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
       }
       out$distSign <- temp$distSign
       
-      message("recalculated distSign for out")
-      
     }
 
     
     if(any(is.na(outControl$distSign)))
     {
+      message("Recalculating distSign for control interactions")
       rmap <- Chicago:::.readRmap(list(rmapfile=rmapfile))
       colnames(rmap) <- c("chr", "start", "end", "ID")
       setkey(rmap, "ID")
@@ -1002,26 +997,23 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
         stop("Error calculating distances.")
       }
       outControl$distSign <- temp$distSign
-      
-      message("recalculated distSign for outControl")
-      
+
     }
     
     ##1d) bait annotation: collect s_js, tblb
     ##Note that s_j can be NA (for baits that were filtered out!)
+    message("Collecting bait parameters (s_j and tblb)")
     temp <- x[,list(s_j=s_j[1], tblb=tblb[1]),by="baitID"]
     setkey(temp, baitID)
     setkey(out, baitID)
     setkey(outControl, baitID)
     out <- merge(out, temp, all.x=TRUE)
     outControl <- merge(outControl, temp, all.x = TRUE)
-    
-    message("recalculated distSign for outControl")
-    
-    
+
     ##1e) OE annotation: collect s_is, tlb
     ##s_i not allowed to be NA - just assume 1.
     ##(Could be an issue if too many OEs were filtered out => s_i should be 0)
+    message("Collecting other end parameters (s_i and tlb)")
     temp <- x[,list(s_i=s_i[1], tlb=tlb[1]),by="otherEndID"]
     setkey(temp, otherEndID)
     setkey(out, otherEndID)
@@ -1035,11 +1027,12 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     
     outControl[is.na(s_i),s_i:=1] ## <-- assumption
     setkey(outControl, baitID, otherEndID)
-    
-    message("collected s_is and tlb")
+
+    #message("collected s_is and tlb")
     
     
     ##1f) reconstruct Tmean information
+    message("Collecting Tmean")
     setkey(x, tlb, tblb)
     setkey(out, tlb, tblb)
     setkey(outControl, tlb, tblb)
@@ -1049,30 +1042,28 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     outControl[,Tmean:=NULL]
     out <- merge(out, temp, all.x=TRUE)
     outControl <- merge(outControl, temp, all.x=TRUE)
-    
-    message("collected s_is and tlb")
+
+    #message("collected s_is and tlb")
     
     
     ##1g) impute some of the missing Tmeans
     ##    missing tlb suggests that the other end was rarely observed, so assume lowest
     ##    Tmean corresponding to the appropriate tblb.
+    message("Imputing missing Tmeans")
     templowest <- temp[,c(Tmean = min(Tmean)),by="tblb"]
     tempDictionary <- templowest$V1
     names(tempDictionary) <- templowest$tblb
     out[is.na(tlb) & !is.na(tblb), Tmean := tempDictionary[tblb]]
     outControl[is.na(tlb) & !is.na(tblb), Tmean := tempDictionary[tblb]]
-    
-    message("imputed some of the missing Tmeans")
-    
-    
+
     ##2) Reconstruct the distance function from distbin info
+    message("Reconstructing the distance function")
     distFunParams <- chicestimateDistFun(x)
-    
-    message("Reconstructed the distance function")
-    
     
     ##3) Reconstruct Bmean information (But!! When s_j = NA,
     ##   ensure that Bmean comes out as NA too.)
+    message("Reconstructing Bmean")
+    
     out <- Chicago:::.estimateBMean(out, distFunParams)
     out[is.na(s_j),Bmean:=NA]
     setkey(out, baitID, otherEndID)
@@ -1084,8 +1075,6 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     
     outData[[i]] <- out
     outDataControl[[i]] <- outControl
-    
-    message("Reconstructed Bmean")
     
     
     #This keeps all of the loaded RDAs if we still need them for the count data because we don't have chinputs
@@ -1105,13 +1094,15 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     
     x <- merge(x, rmap_copy, by= "otherEndID")
     
-    message("Assigning conditions")
+    #message("Assigning conditions")
     for(n in 1:length(countput)){
       if(conditions[[i]] == names(countput)[[n]]){
         countput[[n]][[i]] <- x
       }
     }
-    
+   
+    message("")
+     
     if(is.null(targetChs)){ 
       x <- x[, c("baitID", "otherEndID", "N"), with = FALSE]
       columnNames <- paste0("N.", names(targetRDSorRDAFiles))
@@ -1119,9 +1110,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
       setkey(x, baitID, otherEndID)
       tempForCounts[[i]] <- x
       rm(x)
-      
-      message("saved counts")
-      
+
     }
     gc()
   }
@@ -1137,14 +1126,11 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
   countput <- rbindlist(countput)
   setnames(countput, "midpoint", "oeID_mid")
   
+  message("Saving counts\n")
   saveRDS(countput, "countput.Rds")
   
-  message("between (1)")
-  
-  
-  # outData, outDataControl and dispersions are our useful outputs from this part above  
-  
-  message("out of iterative reading function")
+
+  # outData, outDataControl are our useful outputs from this part above  
   
   
   baits <- sort(unique(RU$baitID)) 
@@ -1157,6 +1143,8 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
   
   if(is.null(targetChs)){
     gc()
+    message("Reconstructing countData")
+    
     mergedFiles <- Reduce(merge, tempForCounts)
     countData <- vector("list", length(targetRDSorRDAFiles))
     countDataControl <- vector("list", length(targetRDSorRDAFiles))
@@ -1167,8 +1155,6 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
       countData[[i]] <- countData[[i]][J(baits),] #issue that rds may not contain all baitid otherendid pairs which are in RU
       setkey(countData[[i]], baitID)
       
-      message("countData info collected")
-      
     }
     
     for(i in seq_along(countDataControl)){
@@ -1177,18 +1163,15 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
       countDataControl[[i]] <- countDataControl[[i]][J(baitsControl),] #issue that rds may not contain all baitid otherendid pairs which are in RU
       setkey(countDataControl[[i]], baitID)
       
-      message("countDatacontrol info collected")
-      
     }
     
     CountOut <- RU
     CountOutControl <- RUcontrol
     setkey(CountOut, baitID, otherEndID)
     setkey(CountOutControl, baitID, otherEndID)
+
     
-    message("between (2)")
-    
-    
+    message("Merging countData")
     for(i in seq_along(countData))
     {
       temp <- countData[[i]] #[,c("baitID","otherEndID","N"), with=FALSE]
@@ -1197,8 +1180,9 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
       CountOut <- merge(CountOut, temp, all.x=TRUE)
       CountOut[is.na(N), N:=0]
       setnames(CountOut, old="N", new=columnNames[i])
-      
-      message("countData info merged")
+
+      #message("countData info merged")
+
       
     }
     
@@ -1210,12 +1194,10 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
       CountOutControl <- merge(CountOutControl, temp, all.x=TRUE)
       CountOutControl[is.na(N), N:=0]
       setnames(CountOutControl, old="N", new=columnNames[i])
-      
-      message("countDatacontrol info merged")
-      
+
+      #message("countDatacontrol info merged")     
     }
-    
-    message("no chinput case finished")
+    #message("no chinput case finished")
     
   }
   
@@ -1225,12 +1207,13 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     countData <- vector("list", length(targetChFiles))
     countDataControl <- vector("list", length(targetChFiles))
     gc()
-    
-    for(i in 1:length(countData))
-    {
+
+    for(i in 1:length(countData)){
+      message("Reading count data for ", names(targetChFiles)[i])
+      
       x <- fread(targetChFiles[i])
       setkey(x, baitID)
-      
+
       y <- x[J(baitsControl),]
       x <- x[J(baits),]
       
@@ -1241,14 +1224,14 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
       countDataControl[[i]] <- y
       rm(x)
       rm(y)
-      
-      message("Finished reading of chinputs")
+  
+      #message("Finished reading of chinputs")
       
       gc()
     }
-    
-    ## For each region, count the number of reads in each replicate -----------------
-    
+  
+  ## For each region, count the number of reads in each replicate -----------------
+  
     CountOut <- RU 
     setkey(CountOut, baitID, otherEndID)
     for(i in 1:length(countData))
@@ -1260,8 +1243,8 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
       
       CountOut[is.na(N), N:=0]
       setnames(CountOut, old="N", new=columnName)
-      
-      message("count the number of reads in each replicate for CountOut")
+
+      #message("count the number of reads in each replicate for CountOut")
       
     }
     
@@ -1269,7 +1252,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     CountOutControl <- RUcontrol 
     setkey(CountOutControl, baitID, otherEndID)
     for(i in 1:length(countDataControl))
-    {
+     {
       columnName <- paste0("N.", names(targetChFiles)[i])
       temp <- countDataControl[[i]][,c("baitID","otherEndID","N"), with=FALSE]
       setkey(temp, baitID, otherEndID)
@@ -1277,15 +1260,18 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
       
       CountOutControl[is.na(N), N:=0]
       setnames(CountOutControl, old="N", new=columnName)
-      
-      message("count the number of reads in each replicate for CountOutControl")
-      
-    }
-  }
   
+      #message("count the number of reads in each replicate for CountOutControl")
+      
+     }
+  }
+
   ##3) Collect distance -----------------
   
   ##3a) Distance ------------
+  
+  message("\nCollecting distances for CountOut")
+  
   rmap <- Chicago:::.readRmap(list(rmapfile=rmapfile))
   colnames(rmap) <- c("chr","start","end","fragID")
   setkey(rmap, fragID)
@@ -1302,8 +1288,8 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
                     midpoint.x - midpoint.y,
                     NA)]
   CountOut[, c("chr.x","midpoint.x","chr.y","midpoint.y"):=NULL]
-  
-  message("collected distances for CountOut")
+
+  #message("collected distances for CountOut")
   
   
   #Just repeating the above code for the control
@@ -1316,13 +1302,14 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
                            midpoint.x - midpoint.y,
                            NA)]
   CountOutControl[, c("chr.x","midpoint.x","chr.y","midpoint.y"):=NULL]
-  
-  message("collected distances for CountOutcontrol")
-  
+
+  #message("collected distances for CountOutcontrol") 
   
   # 04mergeData.R
   
   ##Synthesise the count + interaction parameter data together
+  
+  message("Processing count data")
   
   setkey(CountOut, baitID, otherEndID)
   setkey(CountOutControl, baitID, otherEndID)
@@ -1356,8 +1343,8 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     
     CountOut <- merge(CountOut, temp, all.x=TRUE)
     CountOutControl <- merge(CountOutControl, tempControl, all.x=TRUE)
-    
-    message("count + interaction parameter data together")
+
+    #message("count + interaction parameter data together")
     
     gc()
     
@@ -1378,8 +1365,8 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     , each=nrow(CountOut))
   
   setkey(recast, regionID)
-  
-  message("recast")
+
+  #message("recast")
   
   
   # Again - just a copy and paste for the control here 
@@ -1392,19 +1379,20 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     , each=nrow(CountOutControl))
   
   setkey(recastControl, regionID)
-  
-  message("recastControl")
+
+  #message("recastControl")
   
   
   if(saveRDS == TRUE){
+    message("Saving FullRegionData")
     saveRDS(recast, paste0("./FullRegionData", suffix, ".Rds"))
+    message("Saving FullControlRegionData")
     saveRDS(recastControl, paste0("./FullControlRegionData", suffix, ".Rds"))
-    
-    message("saved FullRegionData and FullControlRegionData")
-    
+
   }
-  
-  message("reported FullRegionDatalist")
+
+  #message("reported FullRegionDatalist")
+
   
   return(list(recast, recastControl, countput))
 }
@@ -1421,7 +1409,9 @@ getFullRegionData <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     
   } else{
     
+    message("Reading data for significant interactions")
     FullRegionData <- getFullRegionData1(defchic.settings = defchic.settings, RU = RU, is_control = FALSE, suffix = "")
+    message("\nReading data for control interactions")
     FullRegionData[[2]] <- getFullRegionData1(defchic.settings = defchic.settings, RU = RUcontrol, is_control = TRUE, suffix = "")
     
   }
@@ -1453,8 +1443,8 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   
   fragData <- copy(FullRegionData) ## As otherwise it is altered by reference below and the IHW part breaks
   setkey(fragData, otherEndID)
-  
-  message("saved a copy of FullRegionData")
+
+  #message("saved a copy of FullRegionData")
   
   
   fragData.impute <- copy(fragData)
@@ -1581,7 +1571,7 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
 
 plotdiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, plotBaitNames = TRUE, plotBaitIDs = TRUE, plevel1 = 5, plevel2 = 3, xlim=c(-1e6,1e6), bgCol = "black", lev1Col = "red", lev2Col = "blue", ...){
   
-  if(class(output) == "character"){
+  if(any(class(output) == "character")){
     if(file.exists(output)){
       out <- readRDS(output)
     } else{
@@ -1591,7 +1581,7 @@ plotdiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, pl
     out <- copy(output)
   }
   
-  if(class(countput) == "character"){
+  if(any(class(countput) == "character")){
     if(file.exists(countput)){
       countput_coord <- readRDS(countput)
     } else{
@@ -1601,7 +1591,7 @@ plotdiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, pl
     countput_coord <- copy(countput)
   }
   
-  if(class(baitmapfile) == "character"){
+  if(any(class(baitmapfile) == "character")){
     if(file.exists(baitmapfile)){
       bmap <- fread(baitmapfile)
     } else{
@@ -1668,7 +1658,8 @@ plotdiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, pl
       p1 <- p1 + ggtitle(chroms_bait[i][,baitID])
     }
     
-    p2 <- ggplot(count_temp[condition == conditions[[2]]], aes(oeID_mid, Nav)) +
+    
+      p2 <- ggplot(count_temp[condition == conditions[[2]]], aes(oeID_mid, Nav)) +
       geom_point(aes(colour=big_score, alpha = 0.4, stroke = 0)) + 
       scale_colour_manual(values = c(bgCol, lev2Col, lev1Col)) +
       geom_line(aes(oeID_mid, Bav)) +
@@ -1709,12 +1700,12 @@ plotdiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, pl
       theme_void() +
       theme(legend.position = "none")
     
-    plot_list[[i]] <- plot_grid(p1, pvalue_plot, p2, align = "v", nrow = 3, rel_heights = c(1/2, 1/8, 1/2))
+    suppressWarnings(plot_list[[i]] <- plot_grid(p1, pvalue_plot, p2, align = "v", nrow = 3, rel_heights = c(1/2, 1/8, 1/2)))
   }
   
-  chicdiffPlots <- plot_grid(plotlist = plot_list, align = "h")
-  scalebar_grid <- plot_grid(get_legend(scalebar))
-  plot_grid(chicdiffPlots, scalebar_grid, rel_widths = c(10, 1), ...)
+  suppressWarnings(chicdiffPlots <- plot_grid(plotlist = plot_list, align = "h"))
+  suppressWarnings(scalebar_grid <- plot_grid(get_legend(scalebar)))
+  suppressWarnings(plot_grid(chicdiffPlots, scalebar_grid, rel_widths = c(10, 1), ...))
 }
 
 #---------------------------------------------------#

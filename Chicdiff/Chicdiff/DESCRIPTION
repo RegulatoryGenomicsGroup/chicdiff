@@ -10,3 +10,4 @@ Imports: Chicago, IRanges, DESeq2, ggplot2, cowplot, hexbin, png,
 Suggests: argparser, testthat, BiocStyle, knitr, rmarkdown, ChicdiffData, IRanges
 VignetteBuilder: knitr
 LazyData: true
+biocViews: Epigenetics, HiC, Sequencing, Software

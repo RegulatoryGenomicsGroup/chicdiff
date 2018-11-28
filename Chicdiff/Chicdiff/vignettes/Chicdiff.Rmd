@@ -1,7 +1,7 @@
 ---
 title: "Chicdiff Vignette"
-author: "Jonathan Cairns,William Orchard, Valeriya Malysheva, Mikhail Spivakov"
-date: 15th November, 2018
+author: "Jonathan Cairns, William Orchard, Valeriya Malysheva, Mikhail Spivakov"
+date: 15 November, 2018
 VignetteIndexEntry: 
 output:
   BiocStyle::html_document:
@@ -16,7 +16,6 @@ output:
 %\VignettePackage{Chicdiff}
 -->
 ```{r style, echo = FALSE, results = 'asis'}
-# BiocInstaller::biocLite("BiocStyle") # if needed...
 BiocStyle::markdown()
 ```
 
@@ -32,15 +31,14 @@ A typical Chicdiff job for two biological replicates of CHi-C data takes 30 min 
 
 ---------------------------------------------------------------
 
-The statistical foundations of Chicdiff are presented in a separate paper that is currently available as a preprint [ref!!!]. Briefly, Chicdiff combines moderated differential testing for count data implemented in DESeq2 with CHi-C-specific procedures for signal normalisation and p-value weighting. To increase power, Chicdiff combines reads across several fragments surrounding each significantly interacting region for each bait. Background estimates from CHiCAGO are used to construct a custom scaling matrix that is used in differential testing. The count and scaling matrices are provided as input for the DESeq2 package that tests each interaction for differences between conditions using a negative binomial model with moderated dispersion estimation. DESeq2 implements both pairwise testing between conditions, as well as likelihood ratio tests for multi-condition differences. The p-values from either of these tests are then submitted to the weighting procedure as described below. Due to high distance-dependent variations of signal-to-noise ratios and effect sizes in CHi-C data Chicdiff performs non-uniform multiple testing correction, such that weaker signals at longer distances are corrected more vigorously. We use IHW to learn the weights on the p-values obtained from a differential testing of fragment pairs in a 'training set' that is sampled from the full count data for each sample. We use interaction distance bins as covariates to assign weights to each distance bin in a manner that maximises the overall fraction of rejected null hypotheses. The distance-dependent weights learned this way are applied to the p-values in the test set, and the resulting weighted p-values are reported to the user.
+The methodology behind Chicdiff is presented in a separate paper that is currently available as a preprint [ref!!!]. Briefly, Chicdiff combines moderated differential testing for count data implemented in DESeq2 with CHi-C-specific procedures for signal normalisation and p-value weighting. To increase power, Chicdiff combines reads across several fragments surrounding each significantly interacting region for each bait. Background estimates from CHiCAGO are used to construct a custom scaling matrix that is used in differential testing. The count and scaling matrices are provided as input for the DESeq2 package that tests each interaction for differences between conditions using a negative binomial model with moderated dispersion estimation. DESeq2 implements both pairwise testing between conditions, as well as likelihood ratio tests for multi-condition differences. The p-values from either of these tests are then submitted to the weighting procedure as described below. 
 
-
+Due to strong distance-dependent variation of signal-to-noise ratios and effect sizes in CHi-C data, Chicdiff performs non-uniform multiple testing correction, such that weaker signals at longer distances are corrected more vigorously. We use IHW to learn the weights on the p-values obtained from a differential testing of fragment pairs in a 'training set' that is sampled from the full count data for each sample. We use interaction distance bins as covariates to assign weights to each distance bin in a manner that maximises the overall fraction of rejected null hypotheses. The distance-dependent weights learned this way are applied to the p-values in the test set, and the resulting weighted p-values are reported to the user.
 
 --------- ------------------------------------------------------
 *WARNING* The data set used in this tutorial comes from the package *ChicdiffData*. This package contains small parts (chromosome 19) of published Promoter Capture HiC data sets in human Naive CD4+ T cells and Monocytes [@Javierre2016] - note that we are only reusing raw data from this publication. Do not use any of these sample input data for purposes other than training. 
 
 ---------------------------------------------------------------
-
 
 In this vignette, we use the Naive CD4+ T cells and Monocytes data [@Javierre2016]:
 
@@ -73,7 +71,6 @@ dir(testDesignDir)
 *NOTE* These are same files that were used to run CHiCAGO.
 
 ---------------------------------------------------------------
-
 
 2. *Peakfile*, obtained from CHiCAGO run and containing the scores for the interactions considered by CHiCAGO.
 
