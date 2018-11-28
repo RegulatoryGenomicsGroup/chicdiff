@@ -12,28 +12,12 @@ if (packageVersion("argparser") < 0.3) {
 
 message("\n")
 
-defaultchicSettings <- function()
- {
-   list(
-     inputfiles= NA,
-     peakfiles= NA,
-     targetRDSorRDAs= NA,
-     targetChs= NA,
-     targetColumns= NA,
-     rmapfile= NA,
-     baitmapfile= NA,
-     RUexpand= 5L, 
-     score= 5, 
-     saveRDS = TRUE,
-     parallel = FALSE,
-     printMemory = TRUE
-   )
- }
 
 args = commandArgs(trailingOnly=TRUE)
+
 spec = matrix(c("<input-files>", "Full path to the configuration file, containing info about input file", 
                 "<output-prefix>", "Output file names prefix (cannot contain folders)"),
-                "<peak-files>", "Full path to Chicago peak file (or comma-separated list of files)",  byrow=TRUE, ncol=3)
+              "<peak-files>", "Full path to Chicago peak file (or comma-separated list of files)",  byrow=TRUE, ncol=3)
 
 p = arg_parser("Run Chicdiff from input files", name="Rscript runChicdiff.R")
 
@@ -43,7 +27,7 @@ p = add_argument(p, arg="--design-dir", help = "Directory with restriction and b
 
 p = add_argument(p, arg="--settings-file", help = "Full path to Chicdiff settings file", default = NA)
 
-p = add_argument(p, arg="--target-coloumns", help = "Comma-separated list of target coloumns to take from peakFiles", default = NA)
+# p = add_argument(p, arg="--target-coloumns", help = "Comma-separated list of target coloumns to take from peakFiles", default = NA)
 
 p = add_argument(p, arg="--RUexpand", help = "Number of fragments to expand by in either direction", default=5L)
 
@@ -56,6 +40,8 @@ p = add_argument(p, arg="--saveRDS", help = "Save the intermediate files or not"
 p = add_argument(p, arg="--output-dir", help = "The name of the output directory (can be a full path)", default="<output-prefix>")
 
 p = add_argument(p, arg="--run-mode", help = "Running in parallel (requires more memory, but is faster) or sequential mode (less memory, but slower)", default="<output-prefix>")
+
+p = add_argument(p, arg="--device", help = "The format if output figures", default="png")
 
 p = add_argument(p, arg="--print-memory", help = "Should chicdiffPipeline print out memory use?", flag=TRUE) # Possibly remove
 
@@ -112,7 +98,7 @@ peakFiles = strsplit(opts[["<peak_files>"]], "\\,")[[1]]
 
 settingsFile = opts[["settings_file"]]
 designDir = opts[["design_dir"]] 
-tarcols = strsplit(opts[["target-coloumns"]], "\\,")
+# tarcols = strsplit(opts[["target-coloumns"]], "\\,")
 
 printMemory = opts[["print_memory"]] # Possibly remove
 
@@ -127,13 +113,13 @@ outDir = ifelse(opts[["output_dir"]]=="<output-prefix>", outPrefix_rel, opts[["o
 outPrefix = file.path(outDir, outPrefix_rel)
 
 ### main code ###
-  
+
 if(is.na(settingsFile)){
   settingsFile = NULL
 }
 
 message("Setting the experiment...\n")
-setchic = setExperiment(designDir = designDir, settingsFile = settingsFile)
+defchic.settings = setChicExperiment(designDir = designDir, settingsFile = settingsFile)
 
 
 # if(length(inputFiles)>1){
@@ -143,7 +129,7 @@ setchic = setExperiment(designDir = designDir, settingsFile = settingsFile)
 #   message("\n")
 #   cd = readSample(inputFiles, cd)
 # }
-  
+
 if(!dir.create.ifNotThere(outDir, recursive = TRUE)){
   stop(paste("Couldn't create folder", outDir, "\n"))
 }
@@ -151,7 +137,7 @@ if(!dir.create.ifNotThere(outDir, recursive = TRUE)){
 
 
 message("\n\nStarting chicdiffPipeline...\n")
-output = chicdiffPipeline(setchic, inputfiles, targetChFiles, targetRDSorRDAFiles, printMemory = printMemory)
+output = chicdiffPipeline(defchic.settings, inputfiles, targetChFiles, targetRDSorRDAFiles, printMemory = printMemory)
 
 # if(saveDESeq){
 #   saveRDS(DESeqOut, paste0(outPrefix, ".Rds"))
@@ -189,13 +175,13 @@ if(!dir.create.ifNotThere("examples")){
   stop("Couldn't create folder examples\n")      
 }
 
-  
+
 if (!moveToFolder("\\.txt", "data")){
   stop("Couldn't move txt files to data folder\n")
 }
 
 if(!moveToFolder("\\.Rds", "data")){
-    stop("Couldn't move the Rds file to data folder\n")
+  stop("Couldn't move the Rds file to data folder\n")
 }
 
 if(!moveToFolder("xamples\\.pdf", "examples")){

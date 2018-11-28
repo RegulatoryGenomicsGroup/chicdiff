@@ -20,15 +20,16 @@
   \item{baitmapfile}{Default: NA. The location of the bait map file; see the vignette for a description of what this file should contain.}
   \item{RUexpand}{Default: 5L. The number of fragments to expand by in either direction.}
   \item{score}{Default: 5. The filtering score threshold applied to contacts.}
-  \item{saveRDS}{Default: TRUE. Save the output of every step of chicdiff pipeline in the .Rds format?}
+  \item{saveRDS}{Default: FALSE. Save the output of every step of chicdiff pipeline?}
   \item{parallel}{Default: FALSE. Run in parallel or stepwise mode? Parallel mode would require less time, but more memory.}
-  \item{printMemory}{Default: TRUE. A garbage collection and print of memory usage statistics}
+  \item{device}{Default: png. The format of the output figures.}
+  \item{printMemory}{Default: TRUE. A garbage collection and print of memory usage statistics.}
 }
 \author{
   Jonathan Cairns, Will Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 \seealso{
-  \code{\link{setchicExperiment}}, \code{\link{.updatechicSettings}}
+  \code{\link{setChicExperiment}}, \code{\link{.updateChicSettings}}
 }
 \examples{
   defchic.settings <- defaultchicSettings()
