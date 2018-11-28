@@ -1832,8 +1832,9 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
 }
 
 
-getCandidateInteractions <- function(output, peakFiles, pvcut){
+getCandidateInteractions <- function(defchic.settings, output, peakFiles, pvcut){
   
+  targetRDSorRDAs = defchic.settings[["targetRDSorRDAs"]]
   peakFiles <- fread(peakFiles)
   output <- readRDS(output)
   
@@ -1843,7 +1844,20 @@ getCandidateInteractions <- function(output, peakFiles, pvcut){
   peakFiles <- peakFiles[,oeID1:=oeID]
   
   outpeak <- foverlaps(peakFiles, res, by.x=c("baitID", "oeID", "oeID1"), by.y=c("baitID", "minOE", "maxOE"), nomatch =0, mult = "all")
-  #fwrite(outpeak, "./outpeak.txt")
+  
+  outpeak[,cond1mean:= asinh(rowMeans(.SD)), .SDcols=names(targetRDSorRDAs[[1]])]
+  outpeak[,cond2mean:= asinh(rowMeans(.SD)), .SDcols=names(targetRDSorRDAs[[2]])]
+  outpeak[,delta:=abs(cond1mean-cond2mean)]  
+  outpeak[,cond1mean:=NULL]
+  outpeak[,cond2mean:=NULL]
+  
+  outpeak<- outpeak[delta > 1]
+  
+  final <- outpeak[,list(OEstart = OEstart[1], OEend=OEend[1], baitChr=baitChr[1], baitstart=baitstart[1], 
+                         baitend = baitend[1],
+                         weighted_pvalue = weighted_pvalue[1], baitName = baitName[1],condidates = paste(oeID, collapse=",")), 
+                   by=c("baitID", "regionID")]
+  
+  
 }
-
 
