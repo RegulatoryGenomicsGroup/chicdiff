@@ -2,7 +2,7 @@
 \alias{getFullRegionData2}
 
 \title{
-Get Full Region Data (parallel version)
+Get Full Region Data and Full Control Region Data(parallel version)
 }
 \description{
 Recovers the full data for every region - contact from targetRDSorRDAs and chinput files. Processes Region Universe and Control Region IUniverse in one go.
@@ -11,7 +11,7 @@ Recovers the full data for every region - contact from targetRDSorRDAs and chinp
 getFullRegionData2(defchic.settings, RU, RUcontrol, suffix = "")
 }
 \arguments{
-  \item{defchic.settings}{settings that were set up by running \code{\link{setchicExperiment}}}
+  \item{defchic.settings}{settings that were set up by running \code{\link{setChicExperiment}}}
   \item{RU}{Region Universe set up by running \code{\link{getRegionUniverse}}}
   \item{RUcontrol}{Control Region Universe set by by running \code{\link{getControlRegionUniverse}}}
   \item{suffix}{Optional: suffix to add to the name of the saved files}
@@ -25,19 +25,27 @@ getFullRegionData2(defchic.settings, RU, RUcontrol, suffix = "")
 }
 
 \author{
-Jonathan Cairns, Will Orchard, Valeriya Malysheva and Mikhail Spivakov
+Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 
 \seealso{
-  \code{\link{setchicExperiment}}, \code{\link{getRegionUniverse}}, \code{\link{getControlRegionUniverse}}
+  \code{\link{setChicExperiment}}, \code{\link{getRegionUniverse}}, \code{\link{getControlRegionUniverse}}
 }
 \examples{
-defchic.settings <- setchicExperiment(designDir="path/to/DesignDir", settingsFile = "path/to/settingsFile")
- 
-RU <- getRegionUniverse(defchic.settings)
+# path to recover test data
+dataPath <- system.file("extdata", package="ChicdiffData")
 
-RUcontrol <- getControlRegionUniverse3(defchic.settings, RU)
- 
+## read in the settings
+testDefChicSettings <- readRDS(file.path(dataPath, "defChicSettings.Rds")
+
+# path to recover pre-processes test data
+resultsPath <- file.path(dataPath, "CD4_Mono_results")
+
+## load pre-processed data
+testRU <- file.path(resultsPath, "RegionUniverse.Rds")
+testRUcontrol <- file.path(resultsPath, "ControlRegionUniverse.Rds")
+
+# get FUll Region Data and Full Control Region Data in parallel 
 FullRegionData <- getFullRegionData2(defchic.settings = defchic.settings, RU = RU, RUcontrol = RUcontrol, suffix = "")
 }
 

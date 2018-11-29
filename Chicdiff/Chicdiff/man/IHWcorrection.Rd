@@ -32,16 +32,33 @@ IHWcorrection(defchic.settings, DESeqOut, FullRegionData, DESeqOutControl, FullC
 }
 
 \author{
-Jonathan Cairns, Will Orchard, Valeriya Malysheva and Mikhail Spivakov
+Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 
 \seealso{
-  \code{\link{setchicExperiment}}, \code{\link{getFullRegionData}}, \code{\link{DESeq2Wrap}}, \code{\link{plotdiffBaits}}
+  \code{\link{setChicExperiment}}, \code{\link{getFullRegionData}}, \code{\link{DESeq2Wrap}}, \code{\link{plotdiffBaits}}
 }
 
 \examples{
-#load here the output and countput...and dedault settings...
+# path to recover test data
+dataPath <- system.file("extdata", package="ChicdiffData")
 
-IHWcorrection(defchic.settings, DESeqOut, FullRegionData[[1]], DESeqOutControl, FullRegionData[[2]], countput = FullRegionData[[3]]) 
+## read in the settings
+defchic.settings <- readRDS(file.path(dataPath, "defChicSettings.Rds")
+
+# path to recover pre-processes test data
+resultsPath <- file.path(dataPath, "CD4_Mono_results")
+
+# load pre-processed FullRegionData and FullControlRegionData
+FullRegionData <- readRDS(file.path(resultsPath, "FullRegionData.Rds"))
+FullControlRegionData <- readRDS(file.path(resultsPath, "FullControlRegionData.Rds"))
+countput <- readRDS(file.path(resultsPath, "countput.Rds"))
+
+DESeqOut <- readRDS(file.path(resultsPath, "outPilot.Rds"))
+DESeqOutControl <- readRDS(file.path(resultsPath, "outPilotControl.Rds"))
+
+
+# Run IHW correction
+IHWcorrection(defchic.settings = defchic.settings, DESeqOut = DESeqOut, FullRegionData = FullRegionData, DESeqOutControl = DESeqOutControl, FullRegionDataControl = FullRegionDataControl, countput = countput) 
 
 }

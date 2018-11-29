@@ -27,23 +27,32 @@ DESeq2Wrap(defchic.settings, RU, FullRegionData, suffix = "")
 }
 
 \author{
-Jonathan Cairns, Will Orchard, Valeriya Malysheva and Mikhail Spivakov
+Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 
 \seealso{
-  \code{\link{setchicExperiment}}, \code{\link{getRegionUniverse}}, \code{\link{getControlRegionUniverse}}, \code{\link{getFullRegionData1}}, \code{\link{getFullRegionData2}}}
+  \code{\link{setChicExperiment}}, \code{\link{getRegionUniverse}}, \code{\link{getControlRegionUniverse}}, \code{\link{getFullRegionData1}}, \code{\link{getFullRegionData2}}}
   
 \examples{
-defchic.settings <- setchicExperiment(designDir="path/to/DesignDir", settingsFile = "path/to/settingsFile")
+# path to recover test data
+dataPath <- system.file("extdata", package="ChicdiffData")
+
+## read in the settings
+defchic.settings <- readRDS(file.path(dataPath, "defChicSettings.Rds")
   
-RU <- getRegionUniverse(defchic.settings)
-  
-RUcontrol <- getControlRegionUniverse3(defchic.settings, RU)
-  
-FullRegionData <- getFullRegionData2(defchic.settings = defchic.settings, RU = RU, RUcontrol = RUcontrol, suffix = "")
-  
-DESeqOut <- DESeq2Wrap(defchic.settings, RU, FullRegionData[[1]])
-  
-DESeqOutControl <- DESeq2Wrap(defchic.settings, RUcontrol, FullRegionData[[2]], suffix = "Control") 
+# path to recover pre-processes test data
+resultsPath <- file.path(dataPath, "CD4_Mono_results")
+
+## load pre-processed RU and RUcontrol data
+RU <- file.path(resultsPath, "RegionUniverse.Rds")
+RUcontrol <- file.path(resultsPath, "ControlRegionUniverse.Rds")
+
+# load pre-processed FullRegionData and FullControlRegionData
+FullRegionData <- readRDS(file.path(resultsPath, "FullRegionData.Rds"))
+FullControlRegionData <- readRDS(file.path(resultsPath, "FullControlRegionData.Rds"))
+
+# Run DESeq2Wrap
+DESeqOut <- DESeq2Wrap(defchic.settings, RU, FullRegionData)
+DESeqOutControl <- DESeq2Wrap(defchic.settings, RUcontrol, FullControlRegionData, suffix = "Control")  
 }
 

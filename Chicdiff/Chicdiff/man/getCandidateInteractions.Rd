@@ -40,39 +40,9 @@ Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 ## path to recover test data
 dataPath <- system.file("extdata", package="ChicdiffData")
 
-## setup designDir
-testDesignDir <- file.path(dataPath, "designDir")
-
-## read in some raw data
+## read in some raw data and settings
 peakFiles <- file.path(dataPath,"peakMatrix_cd4_mono_unmerged.txt")
-testDataPath_CD4 <- file.path(dataPath, "CD4")
-testDataPath_Mono <- file.path(dataPath, "monocytes")
-targetChs <- list(
-  CD4 = c(NCD4_22 = file.path(testDataPath_CD4, "unitTest_CD41.chinput"),
-          NCD4_23 = file.path(testDataPath_CD4, "unitTest_CD42.chinput")
-  ),
-  
-  Mono = c(Mon_2 = file.path(testDataPath_Mono, "unitTest_Mono2.chinput"),
-           Mon_3 = file.path(testDataPath_Mono, "unitTest_Mono3.chinput")
-  )
-)
-testDataPath_rda <- system.file("data", package="ChicdiffData")
-
-targetRDSorRDAs <- list(
-  CD4 = c(NCD4_22 = file.path(testDataPath_rda, "unitTest_CD41.RDa"),
-          NCD4_23 = file.path(testDataPath_rda, "unitTest_CD42.RDa")
-  ),
-  
-  Mono = c(Mon_2 = file.path(testDataPath_rda, "unitTest_Mono2.RDa"),
-           Mon_3 = file.path(testDataPath_rda, "unitTest_Mono3.RDa")
-  )
-)
-
-settingsFile = file.path(dataPath,"SettingsFile.txt")
-
-
-#set up Chicdiff settings
-defchic.settings <- setChicExperiment(designDir = testDesignDir, targetRDSorRDAs = targetRDSorRDAs, targetChs = targetChs, peakfiles = peakFiles, settingsFile = settingsFile)
+defchic.settings <- readRDS(file.path(dataPath, "defChicSettings.Rds")
 
 #load pre-processed data
 resultsPath <- file.path(dataPath, "CD4_Mono_results")

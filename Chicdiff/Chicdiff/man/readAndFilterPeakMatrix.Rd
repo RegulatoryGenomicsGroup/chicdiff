@@ -30,17 +30,29 @@ Returns the data.table object of filtered contacts.
 }
 
 \author{
-Jonathan Cairns, Will Orchard, Valeriya Malysheva and Mikhail Spivakov
+Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 
 \seealso{
   \code{\link{getRegionUniverse}}
 }
 \examples{
-  designDir <- "~/path/to/DesignDir"
-  peakFiles <- "~/path/to/peakfile.txt"
-  targetColumns <- c("condition_1", "condition_1")
-  x <- readAndFilterPeakMatrix(peakFiles = peakFiles, score = score, targetColumns = targetColumns)
+# path to recover test data
+dataPath <- system.file("extdata", package="ChicdiffData")
+
+## read in the settings
+testDefChicSettings <- readRDS(file.path(dataPath, "defChicSettings.Rds")
+
+# define files for the function
+testPeakFiles = testDefChicSettings[["peakfiles"]]
+testTargetColumns = defchic.settings[["targetColumns"]]
+testTargetRDSorRDAs = defchic.settings[["targetRDSorRDAs"]]
+testConditions <- names(targetRDSorRDAs)
+testScore = defchic.settings[["score"]]
+ 
+# read and filter peak matrix 
+x <- readAndFilterPeakMatrix(peakFiles=testPeakFiles, targetColumns=testTargetColumns, targetRDSorRDAs=testTargetRDSorRDAs, conditions=testConditions, score=testScore)
+
   }
 
 

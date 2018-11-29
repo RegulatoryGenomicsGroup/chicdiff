@@ -25,21 +25,31 @@ getFullRegionData1(defchic.settings, RU, is_control = FALSE, suffix = "")
 }
 
 \author{
-Jonathan Cairns, Will Orchard, Valeriya Malysheva and Mikhail Spivakov
+Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 
 \seealso{
-  \code{\link{setchicExperiment}}, \code{\link{getRegionUniverse}}, \code{\link{getControlRegionUniverse}}
+  \code{\link{setChicExperiment}}, \code{\link{getRegionUniverse}}, \code{\link{getControlRegionUniverse}}
 }
 \examples{
-defchic.settings <- setchicExperiment(designDir="path/to/DesignDir", settingsFile = "path/to/settingsFile")
 
-RU <- getRegionUniverse(defchic.settings)
+# path to recover test data
+dataPath <- system.file("extdata", package="ChicdiffData")
 
-RUcontrol <- getControlRegionUniverse3(defchic.settings, RU)
+## read in the settings
+defchic.settings <- readRDS(file.path(dataPath, "defChicSettings.Rds")
 
+# path to recover pre-processes test data
+resultsPath <- file.path(dataPath, "CD4_Mono_results")
+
+## load pre-processed data
+RU <- file.path(resultsPath, "RegionUniverse.Rds")
+RUcontrol <- file.path(resultsPath, "ControlRegionUniverse.Rds")
+
+#Get Full region Data
 FullRegionData <- getFullRegionData1(defchic.settings = defchic.settings, RU = RU, is_control = FALSE, suffix = "")
 
+#Get Full control region Data
 FullRegionData[[2]] <- getFullRegionData1(defchic.settings = defchic.settings, RU = RUcontrol, is_control = TRUE, suffix = "")
     
 }

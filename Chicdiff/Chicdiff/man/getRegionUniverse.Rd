@@ -12,7 +12,7 @@ getRegionUniverse(defchic.settings)
 }
 
 \arguments{
-  \item{defchic.settings}{defchic.settings defined by \code{\link{setchicExperiment}}}
+  \item{defchic.settings}{defchic.settings defined by \code{\link{setChicExperiment}}}
 }
 
 \value{
@@ -20,14 +20,20 @@ getRegionUniverse(defchic.settings)
 }
 
 \author{
-Jonathan Cairns, Will Orchard, Valeriya Malysheva and Mikhail Spivakov
+Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 
 \seealso{
-  \code{\link{setchicExperiment}}
+  \code{\link{setChicExperiment}}
 }
 \examples{
-defchic.settings <- setchicExperiment(designDir="path/to/DesignDir", settingsFile = "path/to/settingsFile")
-RU <- getRegionUniverse(defchic.settings) 
+# path to recover test data
+dataPath <- system.file("extdata", package="ChicdiffData")
+
+## read in the test settings
+testDefChicSettings <- readRDS(file.path(dataPath, "defChicSettings.Rds")
+
+# create Region Universe
+RU <- getRegionUniverse(defchic.settings=testDefChicSettings) 
 }
 

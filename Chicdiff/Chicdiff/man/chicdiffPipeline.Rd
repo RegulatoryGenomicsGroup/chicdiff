@@ -35,7 +35,7 @@ Otherwise, if saveRDS argument of setchicExperiment was set to TRUE, Chicdiff re
 }
 
 \author{
-Jonathan Cairns, Will Orchard, Valeriya Malysheva and Mikhail Spivakov
+Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 \details{
 This pipeline runs the following functions in order:
@@ -51,10 +51,17 @@ This pipeline runs the following functions in order:
 - \code{\link{IHWcorrection}}
 
 }
+\seealso{
+  \code{\link{setChicExperiment}}
 
 \examples{
-defchic.settings <- setchicExperiment(designDir = designDir, targetColumns = targetColumns, targetRDSorRDAs = targetRDSorRDAs, targetChs = targetChs, peakfiles = peakFiles, settings = list(parallel = TRUE))
+# path to recover test data
+dataPath <- system.file("extdata", package="ChicdiffData")
 
-output <- chicdiffPipeline(defchic.settings)
+## read in the settings
+defchic.settings <- readRDS(file.path(dataPath, "defChicSettings.Rds")
+
+# launch the Chicdiff pipeline
+output <- chicdiffPipeline(defchic.settings = defchic.settings)
 }
 
