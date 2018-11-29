@@ -21,8 +21,8 @@ DESeq2Wrap(defchic.settings, RU, FullRegionData, suffix = "")
 
 \value{
   \item{out}{DESeq results file (in a data.table format, not a DESeq object file!) with normalization factors based on the FullMean}
-  \item{05outPilot.Rds }{if saveRDS is TRUE - saves DESeq results file (=out) as a .Rds data.table (not a DESeq object file!) with normalization factors based on the FullMean}
-  \item{05outStandardDESeq }{standard DESeq results file as a .Rds data.table (not a DESeq object file!) with the size factors estimated using the "median ratio method"}
+  \item{outPilot.Rds }{if saveRDS is TRUE - saves DESeq results file (=out) as a .Rds data.table (not a DESeq object file!) with normalization factors based on the FullMean}
+  \item{outStandardDESeq }{standard DESeq results file as a .Rds data.table (not a DESeq object file!) with the size factors estimated using the "median ratio method"}
 
 }
 
