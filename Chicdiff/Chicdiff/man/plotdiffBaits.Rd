@@ -16,7 +16,7 @@ plotdiffBaits(output, countput, baitmapfile, n = 3, baits = NULL, plotBaitNames 
   
   \item{countput}{countput file, containing counts recovered from the .Rda Chicago files, produced in  \code{\link{getFullRegionData1}} or \code{\link{getFullRegionData2}}.}
 
-  \item{baitmapfile}{The location of the bait map file. Recovered from defchic.settings, produced by  \code{\link{setchicExperiment}}.}
+  \item{baitmapfile}{The location of the bait map file. Recovered from defchic.settings, produced by  \code{\link{setChicExperiment}}.}
 
   \item{n}{The number of baits to plot (ignored if \code{baits} is specified). The differential landscape of n random unique baits will be displayed.}
 
@@ -55,19 +55,19 @@ Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 
 \examples{
+
 #load the output and countput
 dataPath <- system.file("extdata", package="ChicdiffData")
 resultsPath <- file.path(dataPath, "CD4_Mono_results")
 
 mini_output <- readRDS(file.path(resultsPath, "06Weighted.Rds"))
 mini_countput <- readRDS(file.path(resultsPath, "countput.Rds"))
+
+testDesignDir <- file.path(dataPath, "designDir")
 bmap <- fread(file.path(testDesignDir, "chr19_GRCh37_HindIII.baitmap"))
 baits <- c(331172, 320562, 327700)
 
 #plot bait interactions
 plotdiffBaits(output = mini_output, countput = mini_countput, baitmapfile = bmap, baits = baits)
-
-# if you want to save the plot:
-ggsave("diffbaitPlot.pdf", device = "pdf", path = "./")
 
 }

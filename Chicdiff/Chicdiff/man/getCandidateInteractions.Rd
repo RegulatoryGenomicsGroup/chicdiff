@@ -41,14 +41,15 @@ Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 dataPath <- system.file("extdata", package="ChicdiffData")
 
 ## read in some raw data and settings
-peakFiles <- file.path(dataPath,"peakMatrix_cd4_mono_unmerged.txt")
-defchic.settings <- readRDS(file.path(dataPath, "defChicSettings.Rds")
+testPeakFiles <- file.path(dataPath,"peakMatrix_cd4_mono_unmerged.txt")
+testDefChicSettings <- readRDS(file.path(dataPath, "defChicSettings.Rds"))
 
 #load pre-processed data
 resultsPath <- file.path(dataPath, "CD4_Mono_results")
-output <- file.path(resultsPath, "weighted.Rds")
+testOutput <- file.path(resultsPath, "Weighted.Rds")
 
 #get candidate interactions
-out <- getCandidateInteractions(defchic.settings, output = output, peakFiles = peakFiles, pvcut = 0.05, deltaAsinhScore = 1)
+out <- getCandidateInteractions(defchic.settings=testDefChicSettings, output = testOutput, 
+                                peakFiles = testPeakFiles, pvcut = 0.05, deltaAsinhScore = 1)
 }
 

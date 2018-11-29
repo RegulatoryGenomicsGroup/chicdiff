@@ -58,16 +58,18 @@ A list updated settings for a chicdiff experiment
 }
 \examples{
 
-## path to recover test data
+# path to recover test data
 dataPath <- system.file("extdata", package="ChicdiffData")
 
-## setup designDir
+# path to DesignDir
 testDesignDir <- file.path(dataPath, "designDir")
 
-## read in some raw data
+# recover paths to test data
 peakFiles <- file.path(dataPath,"peakMatrix_cd4_mono_unmerged.txt")
+
 testDataPath_CD4 <- file.path(dataPath, "CD4")
 testDataPath_Mono <- file.path(dataPath, "monocytes")
+
 targetChs <- list(
   CD4 = c(NCD4_22 = file.path(testDataPath_CD4, "unitTest_CD41.chinput"),
           NCD4_23 = file.path(testDataPath_CD4, "unitTest_CD42.chinput")
@@ -77,6 +79,7 @@ targetChs <- list(
            Mon_3 = file.path(testDataPath_Mono, "unitTest_Mono3.chinput")
   )
 )
+
 testDataPath_rda <- system.file("data", package="ChicdiffData")
 
 targetRDSorRDAs <- list(
@@ -92,7 +95,7 @@ targetRDSorRDAs <- list(
 settingsFile = file.path(dataPath,"SettingsFile.txt")
 
 #set up Chicdiff settings
-defchic.settings <- setChicExperiment(designDir = testDesignDir, targetRDSorRDAs = targetRDSorRDAs, targetChs = targetChs, peakfiles = peakFiles, settingsFile = settingsFile)
+testDefChicSettings <- setChicExperiment(designDir = testDesignDir, targetRDSorRDAs = targetRDSorRDAs, targetChs = targetChs, peakfiles = peakFiles, settingsFile = settingsFile)
 
 }
 

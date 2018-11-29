@@ -38,8 +38,6 @@ Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 dataPath <- system.file("extdata", package="ChicdiffData")
 
 ## read in the settings
-settingspath <- file.path(dataPath, "defChicSettings.Rds")
-
 testDefChicSettings <- readRDS(file.path(dataPath, "defChicSettings.Rds"))
                                
 # path to recover pre-processes test data

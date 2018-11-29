@@ -32,6 +32,6 @@
   \code{\link{setChicExperiment}}, \code{\link{.updateChicSettings}}
 }
 \examples{
-  defchic.settings <- defaultchicSettings()
-  print(defchic.settingss)
+DefChicSettings <- defaultchicSettings()
+print(DefChicSettings)
 }

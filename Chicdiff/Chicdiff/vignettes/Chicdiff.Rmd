@@ -233,7 +233,7 @@ To have an idea of fragments which interaction with the bait of interest contrib
 output = file.path(resultsPath, "06Weighted.Rds")
 peakFiles = file.path(dataPath, "peakMatrix_cd4_mono_unmerged.txt")
 
-outpeak <- getCandidateInteractions(output = output, peakFiles = peakFiles, pvcut = 0.05)
+outpeak <- getCandidateInteractions(defchic.settings = defchic.settings, output = output, peakFiles = peakFiles, pvcut = 0.05, deltaAsinhScore =1)
 
 head(outpeak)
 ```
