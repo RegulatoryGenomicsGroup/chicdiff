@@ -1570,7 +1570,7 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
 #-----------------------------IHW and plotting functions-------------------------------#
 
 plotdiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, plotBaitNames = TRUE, 
-                          lotBaitIDs = TRUE, plevel1 = 5, plevel2 = 3, xlim=c(-1e6,1e6), bgCol = "black", 
+                          plotBaitIDs = TRUE, plevel1 = 5, plevel2 = 3, xlim=c(-1e6,1e6), bgCol = "black", 
                           lev1Col = "red", lev2Col = "blue", ...){
   
   if(any(class(output) == "character")){
