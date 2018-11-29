@@ -41,18 +41,18 @@ Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 dataPath <- system.file("extdata", package="ChicdiffData")
 
 ## read in the settings
-testDefChicSettings <- readRDS(file.path(dataPath, "defChicSettings.Rds")
+testDefChicSettings <- readRDS(file.path(dataPath, "defChicSettings.Rds"))
 
 # define files for the function
 testPeakFiles = testDefChicSettings[["peakfiles"]]
-testTargetColumns = defchic.settings[["targetColumns"]]
-testTargetRDSorRDAs = defchic.settings[["targetRDSorRDAs"]]
-testConditions <- names(targetRDSorRDAs)
-testScore = defchic.settings[["score"]]
- 
+testTargetColumns = testDefChicSettings[["targetColumns"]]
+testTargetRDSorRDAs = testDefChicSettings[["targetRDSorRDAs"]]
+testConditions <- names(testTargetRDSorRDAs)
+testScore = testDefChicSettings[["score"]]
+
 # read and filter peak matrix 
 x <- readAndFilterPeakMatrix(peakFiles=testPeakFiles, targetColumns=testTargetColumns, targetRDSorRDAs=testTargetRDSorRDAs, conditions=testConditions, score=testScore)
 
-  }
+}
 
 

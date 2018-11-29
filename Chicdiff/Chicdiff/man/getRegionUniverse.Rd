@@ -31,7 +31,7 @@ Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 dataPath <- system.file("extdata", package="ChicdiffData")
 
 ## read in the test settings
-testDefChicSettings <- readRDS(file.path(dataPath, "defChicSettings.Rds")
+testDefChicSettings <- readRDS(file.path(dataPath, "defChicSettings.Rds"))
 
 # create Region Universe
 RU <- getRegionUniverse(defchic.settings=testDefChicSettings) 

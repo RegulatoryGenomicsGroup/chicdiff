@@ -53,15 +53,16 @@ This pipeline runs the following functions in order:
 }
 \seealso{
   \code{\link{setChicExperiment}}
+}
 
 \examples{
 # path to recover test data
 dataPath <- system.file("extdata", package="ChicdiffData")
 
 ## read in the settings
-defchic.settings <- readRDS(file.path(dataPath, "defChicSettings.Rds")
+testDefChicSettings <- readRDS(file.path(dataPath, "defChicSettings.Rds"))
 
 # launch the Chicdiff pipeline
-output <- chicdiffPipeline(defchic.settings = defchic.settings)
+output <- chicdiffPipeline(defchic.settings = testDefChicSettings)
 }
 

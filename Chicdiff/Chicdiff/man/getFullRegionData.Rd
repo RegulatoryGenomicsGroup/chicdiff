@@ -14,10 +14,10 @@ getFullRegionData(defchic.settings, RU, RUcontrol, suffix = "")
 }
 
 \arguments{
-  \item{defchic.settings}{settings that were set up by running \code{\link{setchicExperiment}}}
+  \item{defchic.settings}{settings that were set up by running \code{\link{setChicExperiment}}}
   \item{RU}{Region Universe set up by running \code{\link{getRegionUniverse}}}
-  \item{RUcontrol}{Control Region Universe set up by running \code{\link{getControlRegionUniverse3}}}
-  \item{suffix}{Control Region Universe set up by running \code{\link{getControlRegionUniverse3}}}
+  \item{RUcontrol}{Control Region Universe set up by running \code{\link{getControlRegionUniverse}}}
+  \item{suffix}{Control Region Universe set up by running \code{\link{getControlRegionUniverse}}}
 }
 
 \value{
@@ -33,7 +33,7 @@ Jonathan Cairns, Willia Orchard, Valeriya Malysheva and Mikhail Spivakov
 
 
 \seealso{
-  \code{\link{setChicExperiment}}, \code{\link{getRegionUniverse}}, \code{\link{getControlRegionUniverse3}}
+  \code{\link{setChicExperiment}}, \code{\link{getRegionUniverse}}, \code{\link{getControlRegionUniverse}}
 }
 
 \examples{
@@ -41,14 +41,14 @@ Jonathan Cairns, Willia Orchard, Valeriya Malysheva and Mikhail Spivakov
 dataPath <- system.file("extdata", package="ChicdiffData")
 
 ## read in the settings
-testDefChicSettings <- readRDS(file.path(dataPath, "defChicSettings.Rds")
+testDefChicSettings <- readRDS(file.path(dataPath, "defChicSettings.Rds"))
 
 # path to recover pre-processes test data
 resultsPath <- file.path(dataPath, "CD4_Mono_results")
 
 ## load pre-processed RU and RUcontrol data
-testRU <- file.path(resultsPath, "RegionUniverse.Rds")
-testRUcontrol <- file.path(resultsPath, "ControlRegionUniverse.Rds")
+testRU <- readRDS(file.path(resultsPath, "RegionUniverse.Rds"))
+testRUcontrol <- readRDS(file.path(resultsPath, "ControlRegionUniverse.Rds"))
 
 # Get Full Region Data and Full Control Region Data
 FullRegionData <- getFullRegionData(defchic.settings = testDefChicSettings, RU = testRU , RUcontrol = testRUcontrol, suffix = "")

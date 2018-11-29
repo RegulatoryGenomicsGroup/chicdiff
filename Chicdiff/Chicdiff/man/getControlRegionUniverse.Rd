@@ -35,13 +35,13 @@ Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 dataPath <- system.file("extdata", package="ChicdiffData")
 
 ## read in the test settings
-testDefChicSettings <- readRDS(file.path(dataPath, "defChicSettings.Rds")
+testDefChicSettings <- readRDS(file.path(dataPath, "defChicSettings.Rds"))
 
 # path to recover pre-processes test data
 resultsPath <- file.path(dataPath, "CD4_Mono_results")
 
 ## load pre-processed RU and RUcontrol data
-testRU <- file.path(resultsPath, "RegionUniverse.Rds")
+testRU <- readRDS(file.path(resultsPath, "RegionUniverse.Rds"))
 
-RUcontrol <- getControlRegionUniverse(defchic.settings = testDefChicSettings, RU = testRU)
+RUcontrol <- getControlRegionUniverse(defchic.settings=testDefChicSettings, RU = testRU)
 }

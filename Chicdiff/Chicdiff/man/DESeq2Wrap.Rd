@@ -21,8 +21,8 @@ DESeq2Wrap(defchic.settings, RU, FullRegionData, suffix = "")
 
 \value{
   \item{out}{DESeq results file (in a data.table format, not a DESeq object file!) with normalization factors based on the FullMean}
-  \item{outPilot.Rds }{if saveRDS is TRUE - saves DESeq results file (=out) as a .Rds data.table (not a DESeq object file!) with normalization factors based on the FullMean}
-  \item{outStandardDESeq }{standard DESeq results file as a .Rds data.table (not a DESeq object file!) with the size factors estimated using the "median ratio method"}
+  \item{outPilot.Rds}{if saveRDS is TRUE - saves DESeq results file (=out) as a .Rds data.table (not a DESeq object file!) with normalization factors based on the FullMean}
+  \item{outStandardDESeq.Rds}{if saveRDS is TRUE - saves standard DESeq results file as a .Rds data.table (not a DESeq object file!) with the size factors estimated using the "median ratio method"}
 
 }
 
@@ -38,21 +38,24 @@ Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 dataPath <- system.file("extdata", package="ChicdiffData")
 
 ## read in the settings
-defchic.settings <- readRDS(file.path(dataPath, "defChicSettings.Rds")
-  
+settingspath <- file.path(dataPath, "defChicSettings.Rds")
+
+testDefChicSettings <- readRDS(file.path(dataPath, "defChicSettings.Rds"))
+                               
 # path to recover pre-processes test data
 resultsPath <- file.path(dataPath, "CD4_Mono_results")
-
+                               
 ## load pre-processed RU and RUcontrol data
-RU <- file.path(resultsPath, "RegionUniverse.Rds")
-RUcontrol <- file.path(resultsPath, "ControlRegionUniverse.Rds")
-
+testRU <- readRDS(file.path(resultsPath, "RegionUniverse.Rds"))
+testRUcontrol <- readRDS(file.path(resultsPath, "ControlRegionUniverse.Rds"))
+                               
 # load pre-processed FullRegionData and FullControlRegionData
-FullRegionData <- readRDS(file.path(resultsPath, "FullRegionData.Rds"))
-FullControlRegionData <- readRDS(file.path(resultsPath, "FullControlRegionData.Rds"))
-
+testFullRegionData <- readRDS(file.path(resultsPath, "FullRegionData.Rds"))
+testFullControlRegionData <- readRDS(file.path(resultsPath, "FullControlRegionData.Rds"))
+                               
 # Run DESeq2Wrap
-DESeqOut <- DESeq2Wrap(defchic.settings, RU, FullRegionData)
-DESeqOutControl <- DESeq2Wrap(defchic.settings, RUcontrol, FullControlRegionData, suffix = "Control")  
+DESeqOut <- DESeq2Wrap(defchic.settings=testDefChicSettings, RU=testRU, FullRegionData=testFullRegionData)
+DESeqOutControl <- DESeq2Wrap(defchic.settings=testDefChicSettings, RU=testRUcontrol, FullRegionData=testFullControlRegionData, suffix = "Control")
+  
 }
 

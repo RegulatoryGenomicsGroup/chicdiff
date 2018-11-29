@@ -2,10 +2,10 @@
 \alias{getFullRegionData2}
 
 \title{
-Get Full Region Data and Full Control Region Data(parallel version)
+Get Full Region Data and Full Control Region Data (parallel version)
 }
 \description{
-Recovers the full data for every region - contact from targetRDSorRDAs and chinput files. Processes Region Universe and Control Region IUniverse in one go.
+Recovers the full data for every region - contact from targetRDSorRDAs and chinput files. Processes Region Universe and Control Region Universe in one go.
 }
 \usage{
 getFullRegionData2(defchic.settings, RU, RUcontrol, suffix = "")
@@ -36,16 +36,17 @@ Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 dataPath <- system.file("extdata", package="ChicdiffData")
 
 ## read in the settings
-testDefChicSettings <- readRDS(file.path(dataPath, "defChicSettings.Rds")
+testDefChicSettings <- readRDS(file.path(dataPath, "defChicSettings.Rds"))
 
 # path to recover pre-processes test data
 resultsPath <- file.path(dataPath, "CD4_Mono_results")
 
 ## load pre-processed data
-testRU <- file.path(resultsPath, "RegionUniverse.Rds")
-testRUcontrol <- file.path(resultsPath, "ControlRegionUniverse.Rds")
+testRU <- readRDS(file.path(resultsPath, "RegionUniverse.Rds"))
+testRUcontrol <- readRDS(file.path(resultsPath, "ControlRegionUniverse.Rds"))
 
 # get FUll Region Data and Full Control Region Data in parallel 
-FullRegionData <- getFullRegionData2(defchic.settings = defchic.settings, RU = RU, RUcontrol = RUcontrol, suffix = "")
+FullRegionData <- getFullRegionData2(defchic.settings = testDefChicSettings, RU = testRU, RUcontrol = testRUcontrol, suffix = "")
+ 
 }
 
