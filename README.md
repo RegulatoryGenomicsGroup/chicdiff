@@ -1,4 +1,4 @@
-**Chicdiff: A differential caller for Capture HiC data** 
+**Chicdiff: A differential caller for Capture Hi-C data** 
 
 Chicdiff is a pipeline for identifying differential Capture Hi-C interactions between two conditions. 
 
