@@ -215,7 +215,7 @@ By default Chicdiff produces a plot, showing four random baits from the top 100 
 Using the final Chicdiff output file, countput and the baitmap as inputs to *plotdiffBaits()* function the user can modify the number of baits to display or provide a set of defind baits to plot, as well as change the display parameters, such as color of interactions, the distance around the bait to display and others (see documentation of *plotdiffBaits*).
 
 ```{r, warning=FALSE}
-mini_output <- readRDS(file.path(resultsPath, "06Weighted.Rds"))
+mini_output <- readRDS(file.path(resultsPath, "Weighted.Rds"))
 mini_countput <- readRDS(file.path(resultsPath, "countput.Rds"))
 bmap <- fread(file.path(testDesignDir, "chr19_GRCh37_HindIII.baitmap"))
 
@@ -230,7 +230,7 @@ It is important to keep in mind that weighted_pvalue produced by Chicdiff correp
 To have an idea of fragments which interaction with the bait of interest contributed to the weighted pvalue users can user *getCandidateInteractions()* function.
 
 ```{r}
-output = file.path(resultsPath, "06Weighted.Rds")
+output = file.path(resultsPath, "Weighted.Rds")
 peakFiles = file.path(dataPath, "peakMatrix_cd4_mono_unmerged.txt")
 
 outpeak <- getCandidateInteractions(defchic.settings = defchic.settings, output = output, peakFiles = peakFiles, pvcut = 0.05, deltaAsinhScore =1)
