@@ -46,4 +46,4 @@ Chicdiff was developed by:
 - Valeriya Malysheva
 - Mikhail Spivakov ([mikhail.spivakov@lms.mrc.ac.uk](mailto:mikhail.spivakov@lms.mrc.ac.uk))
 
-Chicdiff was developed at the Regulatory Genomics Group, Babraham Institute, Cambridge UK. From July 2018, the group is based at MRC London Institute of Medical Sciences in London, where it is known as [Functional Gene Control](http://www.lms.mrc.ac.uk/groups/functional-gene-control) group.
+We started developing Chicdiff at the Regulatory Genomics Group, Babraham Institute, Cambridge UK. In July 2018, the group moved to MRC London Institute of Medical Sciences in London, where it is known as [Functional Gene Control](http://www.lms.mrc.ac.uk/groups/functional-gene-control) group.
