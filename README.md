@@ -27,7 +27,7 @@ library(devtools)
 install_github("RegulatoryGenomicsGroup/chicdiff", subdir="Chicdiff")
 ```
 
-Optionally, install the PCHiCdata package at the same time:
+Optionally, install the ChicdiffData package at the same time:
 
 ```{r}
 install_github("RegulatoryGenomicsGroup/chicdiff", subdir="ChicdiffData")
