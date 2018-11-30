@@ -17,7 +17,7 @@ Please refer to the Chicdiff R package vignette for more information.
 
 1. Make sure that you have R version >= 3.4.0. 
 
-2. Download the chicagoTools/runChicdiff.R scripts from the repository.
+2. Download the chicagoTools/runChicdiff.R script from the repository.
 
 3. Install the R packages. An easy way to do this is by using functionality in devtools - run the following R code:
 
@@ -33,7 +33,7 @@ Optionally, install the PCHiCdata package at the same time:
 install_github("RegulatoryGenomicsGroup/chicdiff", subdir="ChicdiffData")
 ```
 
-This strategy downloads the repository multiple times. To avoid this, you can clone the github repo to a local folder and then install both packages using devtools::install(<path-to-package>).
+This strategy downloads the repository multiple times. To avoid this, you can clone the github repo to a local folder and then install both packages using ``devtools::install(<path-to-package>)``.
 
 If you encounter any problems, please [post an issue](https://github.com/RegulatoryGenomicsGroup/chicdiff/issues) or email the developers. In the email, include output from the R command ``sessionInfo()``, along with any error messages encountered.
 
