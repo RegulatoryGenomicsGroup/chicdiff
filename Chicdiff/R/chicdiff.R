@@ -12,6 +12,8 @@ defaultchicSettings <- function()
     baitmapfile= NA,
     RUexpand= 5L, 
     score= 5,
+    norm="minvar_weighted", 
+    weights_grid = seq(0,1,0.25),
     saveRDS = FALSE,
     parallel = FALSE,
     device = "png",
@@ -38,7 +40,8 @@ setChicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
 }
 
 .updateChicSettings = function(designDir, targetRDSorRDAs, targetChs, peakfiles, 
-                               settings, settingsFile, inputfiles, defchic.settings, updateDesign=FALSE){
+                               settings, settingsFile, inputfiles, defchic.settings, 
+                               updateDesign=FALSE){
   modSettings = vector("list")
   
   if(!is.null(settingsFile)){
@@ -133,7 +136,11 @@ setChicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
     }
   }
   
-  
+  defchic.settings[["norm"]] = tolower(defchic.settings[["norm"]])
+  if (length(defchic.settings[["norm"]])>1){ stop ("Parameter error: Only one normalisation method can be specified at a time") }
+  if (!defchic.settings[["norm"]] %in% c("standard", "fullmean", "minvar", "minvar_weighted")){
+    stop ("Parameter error: normalisation method should be one of 'standard', 'fullmean', 'minvar', 'minvar_weighted'")
+  }  
   
   message("Checking the design files...")
   
@@ -1434,8 +1441,9 @@ geoMean <- function(x, na.rm=FALSE) {
 #------------------------------------------------------------------------------#
 
 DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
-  ##By default, DESeq2 uses sample-specific scaling factors.
   
+  norm = defchic.settings[["norm"]]
+  Grid = defchic.settings[["weights_grid"]]
   rmapfile = defchic.settings[["rmapfile"]]
   saveRDS = defchic.settings[["saveRDS"]]
   
@@ -1445,7 +1453,6 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   setkey(fragData, otherEndID)
   
   #message("saved a copy of FullRegionData")
-  
   
   fragData.impute <- copy(fragData)
   fragData.impute[,s_j.impute := geoMean(s_j, na.rm = TRUE), by=c("baitID", "otherEndID")]
@@ -1466,8 +1473,6 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
     s_j=s_j[1]
   ),by=c("baitID", "regionID", "sample")]
   
-  
-  
   nSamples <- length(unique(regionData.impute$sample))
   
   regionDataMatrix <- matrix(regionData.impute$N,
@@ -1481,92 +1486,116 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
                                 design = ~ condition)
   
   dds.nullModel <- estimateSizeFactors(dds)
-  dds.M3 <- copy(dds.nullModel)
-  dds.M4 <- copy(dds.nullModel)
-  dds.M5 <- copy(dds.nullModel)
-  
   nullSizeFactors <- sizeFactors(dds.nullModel)
   
-  message("construct an appropriate DESeq object")
-  
-  
+  if(norm != "standard"){
+    dds.M3 <- copy(dds.nullModel)
+  }
+  if(norm =="minvar"){
+    dds.M4 <- copy(dds.nullModel)
+  }
+  if(norm == "minvar_weighted"){
+    dds.M5 <- copy(dds.nullModel)
+  }
+
   ##model 1) standard DESeq2 model
-  dds.nullModel <- estimateDispersions(dds.nullModel)
-  dds.nullModel <- nbinomWaldTest(dds.nullModel)
+  if (norm == "standard"){
+    dds.nullModel <- estimateDispersions(dds.nullModel)
+    dds.nullModel <- nbinomWaldTest(dds.nullModel)
+  }
   
-  ##model 2) use fullMean scaling factors
-  normFactorsFull <- matrix(regionData.impute$FullMean, ncol=nSamples, byrow = TRUE)
+  ##model 2) skipped
   
-  normFactorsM3 <- normFactorsFull
-  normFactorsM3 <- normFactorsM3 / exp(rowMeans(log(normFactorsM3))) ##<- normalize to get geometric mean = 1
-  ##remove NA rows
-  selNA <- apply(normFactorsM3, 1, function(x){any(is.na(x))})
-  normFactorsM3[selNA,] <- rep(nullSizeFactors, each=sum(selNA))
-  normalizationFactors(dds.M3) <- normFactorsM3
+  ##model 3) use fullMean scaling factors
+  if (norm != "standard"){
+    normFactorsFull <- matrix(regionData.impute$FullMean, ncol=nSamples, byrow = TRUE)
+    
+    normFactorsM3 <- normFactorsFull
+    normFactorsM3 <- normFactorsM3 / exp(rowMeans(log(normFactorsM3))) ##<- normalize to get geometric mean = 1
+    ##remove NA rows
+    selNA <- apply(normFactorsM3, 1, function(x){any(is.na(x))})
+    normFactorsM3[selNA,] <- rep(nullSizeFactors, each=sum(selNA))
+    normalizationFactors(dds.M3) <- normFactorsM3
+  }
   
-  dds.M3 <- estimateDispersions(dds.M3)
-  dds.M3 <- nbinomWaldTest(dds.M3)
+  if (norm == "fullmean"){
+    dds.M3 <- estimateDispersions(dds.M3)
+    dds.M3 <- nbinomWaldTest(dds.M3)
+  }
   
-  ##model 3 skipped to avoid var name confusion  
+  if (norm %in% c("minvar", "minvar_weighted")){
+    nsf = matrix(rep(nullSizeFactors,nrow(normFactorsM3)), 
+                 ncol=nSamples, nrow=nrow(normFactorsM3), byrow=T) 
+  }
   
   ##model 4) use fullMean or DESeq2 scaling factors, 
   ##depending on what gives lower overall variance of the counts
   ##for a given interaction across all replicates and conditions
-  
-  M4stand <- counts(dds.M4)/nullSizeFactors
-  M4chic <- counts(dds.M4)/normFactorsM3
-  
-  n <- ncol(M4stand)
-  
-  varsM4 <- data.frame(varStand = rowVars(M4stand), 
-                    varChic = rowVars(M4chic))
-  varsM4 <- cbind(varsM4, nullSizeFactors, normFactorsM3)
+  if (norm == "minvar"){
     
-  normFactorsM4 <- apply(varsM4,1,function(x)
-      whichminvar <- which(x[1:2]==min(x[1:2]))[1]
-      x[(3+(whichminvar-1)*n)):(2+whichminvar*n)]
-  )
-  
-  # purely for diagnostic purposes    
-  whichM4 <- apply(varsM4, function(x)which(x[1:2]==min(x[1:2]))[1])
-  
-  normalizationFactors(dds.M4) <- normFactorsM4
-  
-  dds.M4 <- estimateDispersions(dds.M4)
-  dds.M4 <- nbinomWaldTest(dds.M4)
-  
-  ##model 4) use a weighted mean of fullMean or DESeq2 scaling factors
+    M4stand <- counts(dds.M4)/nsf
+    M4chic <- counts(dds.M4)/normFactorsM3
+    
+    varsM4 <- data.frame(varFullmean = rowVars(M4chic),
+                         varStandard = rowVars(M4stand))
+    varsM4 <- cbind(varsM4, normFactorsM3)
+      
+    normFactorsM4 <- t(apply(varsM4,1,function(x){
+        if(x["varFullmean"]<x["varStandard"]) { x[3:(2+nSamples)] }
+        else { nullSizeFactors }
+    }))
+    
+    
+    # purely for diagnostic purposes    
+    whichMinVar4 <- apply(varsM4, 1, function(x)which(x[1:2]==min(x[1:2]))[1])
+    table(whichMinVar4)/length(whichMinVar4)
+    
+    normalizationFactors(dds.M4) <- normFactorsM4
+    
+    dds.M4 <- estimateDispersions(dds.M4)
+    dds.M4 <- nbinomWaldTest(dds.M4)
+  }
+    
+  ##model 5) use a weighted mean of fullMean or DESeq2 scaling factors
   ##that minimises the overall variance of the counts 
   ##for a given interaction across all replicates and conditions
   
-  grid_normFactorsM5 <- vector("list")
-  varsM5 = matrix(nrow(nullSizeFactors),10))
-  i = 1
-  for(tt in seq(0,1,0.1)){
+  if (norm=="minvar_weighted"){
+    glen = length(Grid)
+    grid_normFactorsM5 <- matrix(nrow=nrow(normFactorsM3),ncol=glen*nSamples)
+    varsM5 = matrix(nrow = nrow(normFactorsM3),ncol=glen)
+    i = 1
+    for(tt in Grid){
+      
+      sc <- normFactorsM3*(1-tt)+nsf*tt
+      
+      grid_normFactorsM5[,(1+(i-1)*nSamples):(i*nSamples)] <- sc
+        
+      varsM5[,i] <- t(rowVars(counts(dds.M5)/sc))
+      
+      i=i+1
+      
+    }
+    varsM5 <- cbind(varsM5, grid_normFactorsM5)
     
-    grid_normFactorsM5[[i]] <- nullSizeFactors*tt+normFactorsM3*(1-tt)
-    varsM5[,i] <- rowVars(counts(dds.M5)/grid_normFactorsM5[[i]])
-    i=i+1
+    normFactorsM5 <- t(apply(varsM5,1,function(x){
+      whichminvar <- which(x[1:glen]==min(x[1:glen]))[1]
+      x[(1+glen+(whichminvar-1)*nSamples):(glen+whichminvar*nSamples)]
+    }))
     
+    # Purely for diagnostic purposes    
+    whichMinVar5 <- apply(varsM5, 1, function(x)
+      which(x[1:glen]==min(x[1:glen]))[1])
+      
+    normalizationFactors(dds.M5) <- normFactorsM5
+  
+    dds.M5 <- estimateDispersions(dds.M5)
+    dds.M5 <- nbinomWaldTest(dds.M5)
   }
-  grid_normFactorsM5 = do.call(cbind, grid_normFactorsM5)
-  varsM5 <- cbind(varsM5, grid_normFactorsM5)
-  
-  normFactorsM5 <- apply(varsM5,1,function(x){
-    whichminvar <- which(x[1:10]==min(x[1:10]))[1]
-    x[(11+(whichminvar-1)*n)):(10+whichminvar*n)]
-  })
-  
-  # purely for diagnostic purposes    
-  whichM5 <- apply(varsM5, function(x)which(x[1:10]==min(x[1:10]))[1])
-
-  normalizationFactors(dds.M5) <- normFactorsM5
-
-  dds.M5 <- estimateDispersions(dds.M5)
-  dds.M5 <- nbinomWaldTest(dds.M5)
-  
   
   ##get annotation information -----------
+  
+  message("Processing model output")
   
   ##other ends:
   rmap <- fread(rmapfile)
@@ -1585,47 +1614,74 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   colnames(rmap) <- c("baitchr", "baitstart", "baitend", "baitID")
   annoData <- merge(annoData, rmap, by.x="baitID", by.y="baitID")
   
-  
   setkey(annoData, regionID)
   stopifnot(identical(1:nrow(annoData), annoData$regionID))
   
-  results <- as.data.table(as.data.frame(results(dds.M3)), keep.rownames = "id")
+  if (norm == "standard" ){
+    res = results(dds.nullModel)
+    message("Standard DESeq2 normalisation: # unweighted interactions with padj<0.05: ",
+            nrow(res[res$padj<0.05 & !is.na(res$padj),]))
+  }
+  if (norm == "fullmean"){
+    res = results(dds.M3)
+    message("Chicago full mean-based normalisation: # unweighted interactions with padj<0.05: ",
+            nrow(res[res$padj<0.05 & !is.na(res$padj),]))
+  }
+  if (norm == "minvar"){
+    res = results(dds.M4)
+    message("Minvar normalisation: # unweighted interactions with padj<0.05: ",
+            nrow(res[res$padj<0.05 & !is.na(res$padj),]))
+    message("Scaling factors used for normalisation")
+    print(matrix(table(whichMinVar4)/length(whichMinVar4), nrow=1,
+                 dimnames=list("% cases", c("Fullmean", "Standard"))))
+  }
+  if (norm == "minvar_weighted"){
+    res = results(dds.M5)
+    message("Minvar_weighted normalisation: # unweighted interactions with padj<0.05: ",
+            nrow(res[res$padj<0.05 & !is.na(res$padj),]))
+    message("Weights of standard [vs Fullmean] scaling factors used for normalisation")
+    w = matrix(c(Grid, table(whichMinVar5)/length(whichMinVar5)), nrow=2, byrow=T, 
+               dimnames = list(c("weight", "% cases")))
+    print(w)
+  }
+  
+  results <- as.data.table(as.data.frame(res), keep.rownames = "id")
   results$id <- as.integer(results$id)
   setkey(results, id)
   
-  out <- cbind(
-    results,
-    annoData
-  )
-  
+  out <- cbind(results,annoData)
   out[,id := NULL]
   
-  message("outModel")
-  
-  
-  results.null <- as.data.table(as.data.frame(results(dds.nullModel)), keep.rownames = "id")
-  results.null$id <- as.integer(results.null$id)
-  setkey(results.null, id)
-  
-  out.nullModel <- cbind(
-    results.null,
-    annoData
-  )
-  
-  out.nullModel[,id := NULL]
-  
-  message("out.nullModel")
-  
-  
-  
   if(saveRDS == TRUE){
-    saveRDS(out, paste0("./outPilot", suffix, ".Rds"))
-    saveRDS(out.nullModel, paste0("./outStandardDESeq", suffix, ".Rds"))
+    message("Saving model RDS")
+    saveRDS(out, paste0("./out_norm_", norm, "_", suffix, ".Rds"))
+    
+    if(tolower(norm) == "minvar"){
+      message("Saving varinfo RDS")
+      saveRDS(varsM4[,1:2], paste0("./varinfo_minvar_", suffix, ".Rds"))
+    }
+    if(tolower(norm) == "minvar_weighted"){
+      message("Saving varinfo RDS")
+      saveRDS(varsM5[,1:length(Grid)], paste0("./varinfo_minvar_weighted_", suffix, ".Rds"))
+    }
+    
   }
   
-  #message("savedRDS")
-  
   out 
+
+  # results.null <- as.data.table(as.data.frame(results(dds.nullModel)), keep.rownames = "id")
+  # results.null$id <- as.integer(results.null$id)
+  # setkey(results.null, id)
+  # 
+  # out.nullModel <- cbind(
+  #   results.null,
+  #   annoData
+  # )
+  # 
+  # out.nullModel[,id := NULL]
+  # 
+  # message("out.nullModel")
+  
 }
 
 #-----------------------------IHW and plotting functions-------------------------------#
