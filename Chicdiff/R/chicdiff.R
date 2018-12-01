@@ -1482,6 +1482,8 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   
   dds.nullModel <- estimateSizeFactors(dds)
   dds.M3 <- copy(dds.nullModel)
+  dds.M4 <- copy(dds.nullModel)
+  dds.M5 <- copy(dds.nullModel)
   
   nullSizeFactors <- sizeFactors(dds.nullModel)
   
@@ -1504,6 +1506,65 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   
   dds.M3 <- estimateDispersions(dds.M3)
   dds.M3 <- nbinomWaldTest(dds.M3)
+  
+  ##model 3 skipped to avoid var name confusion  
+  
+  ##model 4) use fullMean or DESeq2 scaling factors, 
+  ##depending on what gives lower overall variance of the counts
+  ##for a given interaction across all replicates and conditions
+  
+  M4stand <- counts(dds.M4)/nullSizeFactors
+  M4chic <- counts(dds.M4)/normFactorsM3
+  
+  n <- ncol(M4stand)
+  
+  varsM4 <- data.frame(varStand = rowVars(M4stand), 
+                    varChic = rowVars(M4chic))
+  varsM4 <- cbind(varsM4, nullSizeFactors, normFactorsM3)
+    
+  normFactorsM4 <- apply(varsM4,1,function(x)
+      whichminvar <- which(x[1:2]==min(x[1:2]))[1]
+      x[(3+(whichminvar-1)*n)):(2+whichminvar*n)]
+  )
+  
+  # purely for diagnostic purposes    
+  whichM4 <- apply(varsM4, function(x)which(x[1:2]==min(x[1:2]))[1])
+  
+  normalizationFactors(dds.M4) <- normFactorsM4
+  
+  dds.M4 <- estimateDispersions(dds.M4)
+  dds.M4 <- nbinomWaldTest(dds.M4)
+  
+  ##model 4) use a weighted mean of fullMean or DESeq2 scaling factors
+  ##that minimises the overall variance of the counts 
+  ##for a given interaction across all replicates and conditions
+  
+  grid_normFactorsM5 <- vector("list")
+  varsM5 = matrix(nrow(nullSizeFactors),10))
+  i = 1
+  for(tt in seq(0,1,0.1)){
+    
+    grid_normFactorsM5[[i]] <- nullSizeFactors*tt+normFactorsM3*(1-tt)
+    varsM5[,i] <- rowVars(counts(dds.M5)/grid_normFactorsM5[[i]])
+    i=i+1
+    
+  }
+  grid_normFactorsM5 = do.call(cbind, grid_normFactorsM5)
+  varsM5 <- cbind(varsM5, grid_normFactorsM5)
+  
+  normFactorsM5 <- apply(varsM5,1,function(x){
+    whichminvar <- which(x[1:10]==min(x[1:10]))[1]
+    x[(11+(whichminvar-1)*n)):(10+whichminvar*n)]
+  })
+  
+  # purely for diagnostic purposes    
+  whichM5 <- apply(varsM5, function(x)which(x[1:10]==min(x[1:10]))[1])
+
+  normalizationFactors(dds.M5) <- normFactorsM5
+
+  dds.M5 <- estimateDispersions(dds.M5)
+  dds.M5 <- nbinomWaldTest(dds.M5)
+  
   
   ##get annotation information -----------
   
