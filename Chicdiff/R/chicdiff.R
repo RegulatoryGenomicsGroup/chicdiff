@@ -1531,6 +1531,9 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   ##model 4) use fullMean or DESeq2 scaling factors, 
   ##depending on what gives lower overall variance of the counts
   ##for a given interaction across all replicates and conditions
+  ##In fact, it's just model (5) with Grid = c(0,1),
+  ##but for historical reasons it's coded separately
+  
   if (norm == "minvar"){
     
     M4stand <- counts(dds.M4)/nsf
@@ -1544,7 +1547,6 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
         if(x["varFullmean"]<x["varStandard"]) { x[3:(2+nSamples)] }
         else { nullSizeFactors }
     }))
-    
     
     # purely for diagnostic purposes    
     whichMinVar4 <- apply(varsM4, 1, function(x)which(x[1:2]==min(x[1:2]))[1])
