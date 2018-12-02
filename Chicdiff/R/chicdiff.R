@@ -1568,6 +1568,9 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
     for(tt in Grid){
       
       sc <- normFactorsM3*(1-tt)+nsf*tt
+      # sc <- exp (log(normFactorsM3)*(1-tt)+log(nsf)*tt)
+      
+      sc <- sc / exp(rowMeans(log(sc)))
       
       grid_normFactorsM5[,(1+(i-1)*nSamples):(i*nSamples)] <- sc
         
@@ -1654,7 +1657,7 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   
   if(saveRDS == TRUE){
     message("Saving model RDS")
-    saveRDS(out, paste0("./out_norm_", norm, "_", suffix, ".Rds"))
+    saveRDS(out, paste0("./out_norm_", norm, suffix, ".Rds"))
     
     if(tolower(norm) == "minvar"){
       message("Saving varinfo RDS")
