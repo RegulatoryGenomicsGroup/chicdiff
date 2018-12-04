@@ -215,6 +215,7 @@ setChicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
 readAndFilterPeakMatrix <- function(peakFiles, targetColumns, targetRDSorRDAs, conditions, score){
   ## Essentially reads in the peak matrix, taking the target columns if specified (else just takes everything) and filters for rows where at least
   ##one score is > 5 (or whatever is specified) and filters out trans interactions. 
+  
   if(length(peakFiles > 1)){
     x <- .multimerge(peakFiles)
   } else {
@@ -338,6 +339,9 @@ getRegionUniverse <- function(defchic.settings, suffix = ""){
   
   ## Expand the "point universe" to get "region universe" by "window" mode------------------
   
+  #baits <- unique(x$baitID)
+  #baits <- head(baits, 5000)
+  #x <- x[baitID %in% baits,]
   
   ##Just expand calls by s in each direction
   
