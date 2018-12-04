@@ -1960,11 +1960,16 @@ getCandidateInteractions <- function(defchic.settings, output, peakFiles, pvcut,
   
   outpeak <- foverlaps(peakFiles, res, by.x=c("baitID", "oeID", "oeID1"), by.y=c("baitID", "minOE", "maxOE"), nomatch =0, mult = "all")
   
-  outpeak[,cond1mean:= asinh(rowMeans(.SD)), .SDcols=names(targetRDSorRDAs[[1]])]
-  outpeak[,cond2mean:= asinh(rowMeans(.SD)), .SDcols=names(targetRDSorRDAs[[2]])]
-  outpeak[,delta:=abs(cond1mean-cond2mean)]  
-  outpeak[,cond1mean:=NULL]
-  outpeak[,cond2mean:=NULL]
+  if(!is.null(names(targetRDSorRDAs[[1]]))){ # replicate-level peakFile
+    outpeak[,cond1mean:= asinh(rowMeans(.SD)), .SDcols=names(targetRDSorRDAs[[1]])]
+    outpeak[,cond2mean:= asinh(rowMeans(.SD)), .SDcols=names(targetRDSorRDAs[[2]])]
+    outpeak[,delta:=abs(cond1mean-cond2mean)]  
+    outpeak[,cond1mean:=NULL]
+    outpeak[,cond2mean:=NULL]
+  }
+  else{ # merged peakFile
+    outpeak[,delta:=abs(get(names(targetRDSorRDAs)[2])-get(names(targetRDSorRDAs)[1]))] 
+  }
   
   outpeak<- outpeak[delta > deltaAsinhScore]
   
