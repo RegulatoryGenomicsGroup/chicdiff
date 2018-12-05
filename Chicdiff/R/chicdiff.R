@@ -1515,10 +1515,21 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
     ##remove NA rows
     selNA <- apply(normFactorsM3, 1, function(x){any(is.na(x))})
     normFactorsM3[selNA,] <- rep(nullSizeFactors, each=sum(selNA))
-    normalizationFactors(dds.M3) <- normFactorsM3
+    
+    sf2 <- estimateSizeFactorsForMatrix(counts(dds.M3)/normFactorsM3)
+    sf2mat <- matrix(rep(sf2,nrow(normFactorsM3)), 
+                     ncol=nSamples, nrow=nrow(normFactorsM3), byrow=T) 
+    
   }
   
   if (norm == "fullmean"){
+    
+    browser()
+    
+    ### added bit
+    nfM3 <- sf2mat*normFactorsM3
+    normalizationFactors(dds.M3) <- nfM3
+    
     dds.M3 <- estimateDispersions(dds.M3)
     dds.M3 <- nbinomWaldTest(dds.M3)
   }
@@ -1537,11 +1548,11 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   if (norm == "minvar"){
     
     M4stand <- counts(dds.M4)/nsf
-    M4chic <- counts(dds.M4)/normFactorsM3
+    M4chic <- counts(dds.M4)/nfM3
     
     varsM4 <- data.frame(varFullmean = rowVars(M4chic),
                          varStandard = rowVars(M4stand))
-    varsM4 <- cbind(varsM4, normFactorsM3)
+    varsM4 <- cbind(varsM4, nfM3)
       
     normFactorsM4 <- t(apply(varsM4,1,function(x){
         if(x["varFullmean"]<x["varStandard"]) { x[3:(2+nSamples)] }
