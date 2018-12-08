@@ -1454,17 +1454,17 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   
   #message("saved a copy of FullRegionData")
   
-  fragData.impute <- copy(fragData)
-  fragData.impute[,s_j.impute := geoMean(s_j, na.rm = TRUE), by=c("baitID", "otherEndID")]
-  fragData.impute[is.na(s_j), s_j:=s_j.impute]
-  fragData.impute[,FullMean.impute := geoMean(FullMean, na.rm = TRUE), by=c("baitID", "otherEndID")]
-  fragData.impute[is.na(FullMean), FullMean:=FullMean.impute]
+  #fragData.impute <- fragData 
+  #fragData.impute[,s_j.impute := geoMean(s_j, na.rm = TRUE), by=c("baitID", "otherEndID")]
+  #fragData.impute[is.na(s_j), s_j:=s_j.impute]
+  #fragData.impute[,FullMean.impute := geoMean(FullMean, na.rm = TRUE), by=c("baitID", "otherEndID")]
+  #fragData.impute[is.na(FullMean), FullMean:=FullMean.impute]
   
   ##NOTE: Standard normalization factors from DESeq2 used for certain sites later.
   
   ##construct an appropriate DESeq object
   
-  regionData.impute <- fragData.impute[,list(
+  regionData <- fragData[,list(
     N=sum(N),
     avDist=(min(distSign)+max(distSign))/2,
     Bmean=sum(Bmean),
@@ -1473,13 +1473,13 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
     s_j=s_j[1]
   ),by=c("baitID", "regionID", "sample")]
   
-  nSamples <- length(unique(regionData.impute$sample))
+  nSamples <- length(unique(regionData$sample))
   
-  regionDataMatrix <- matrix(regionData.impute$N,
+  regionDataMatrix <- matrix(regionData$N,
                              ncol=nSamples,
                              byrow = TRUE)
-  rownames(regionDataMatrix) <- unique(regionData.impute$regionID)
-  colnames(regionDataMatrix) <- unique(regionData.impute$sample)
+  rownames(regionDataMatrix) <- unique(regionData$regionID)
+  colnames(regionDataMatrix) <- unique(regionData$sample)
   colData <- data.frame(condition = fragData$condition[1:ncol(regionDataMatrix)])
   dds <- DESeqDataSetFromMatrix(countData = regionDataMatrix,
                                 colData = colData,
@@ -1506,9 +1506,11 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   
   ##model 2) skipped
   
+  browser()
+  
   ##model 3) use fullMean scaling factors
   if (norm != "standard"){
-    normFactorsFull <- matrix(regionData.impute$FullMean, ncol=nSamples, byrow = TRUE)
+    normFactorsFull <- matrix(regionData$FullMean, ncol=nSamples, byrow = TRUE)
     
     normFactorsM3 <- normFactorsFull
     normFactorsM3 <- normFactorsM3 / exp(rowMeans(log(normFactorsM3))) ##<- normalize to get geometric mean = 1
@@ -1516,19 +1518,16 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
     selNA <- apply(normFactorsM3, 1, function(x){any(is.na(x))})
     normFactorsM3[selNA,] <- rep(nullSizeFactors, each=sum(selNA))
     
-    sf2 <- estimateSizeFactorsForMatrix(counts(dds.M3)/normFactorsM3)
-    sf2mat <- matrix(rep(sf2,nrow(normFactorsM3)), 
-                     ncol=nSamples, nrow=nrow(normFactorsM3), byrow=T) 
+
+    # sf2 <- estimateSizeFactorsForMatrix(counts(dds.M3)/normFactorsM3)
+    # sf2mat <- matrix(rep(sf2,nrow(normFactorsM3)), 
+    #                  ncol=nSamples, nrow=nrow(normFactorsM3), byrow=T) 
     
   }
   
   if (norm == "fullmean"){
     
-    browser()
-    
-    ### added bit
-    nfM3 <- sf2mat*normFactorsM3
-    normalizationFactors(dds.M3) <- nfM3
+    normalizationFactors(dds.M3) <- normFactorsM3
     
     dds.M3 <- estimateDispersions(dds.M3)
     dds.M3 <- nbinomWaldTest(dds.M3)
@@ -1545,39 +1544,43 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   ##In fact, it's just model (5) with Grid = c(0,1),
   ##but for historical reasons it's coded separately
   
-  if (norm == "minvar"){
-    
-    M4stand <- counts(dds.M4)/nsf
-    M4chic <- counts(dds.M4)/nfM3
-    
-    varsM4 <- data.frame(varFullmean = rowVars(M4chic),
-                         varStandard = rowVars(M4stand))
-    varsM4 <- cbind(varsM4, nfM3)
-      
-    normFactorsM4 <- t(apply(varsM4,1,function(x){
-        if(x["varFullmean"]<x["varStandard"]) { x[3:(2+nSamples)] }
-        else { nullSizeFactors }
-    }))
-    
-    # purely for diagnostic purposes    
-    whichMinVar4 <- apply(varsM4, 1, function(x)which(x[1:2]==min(x[1:2]))[1])
-    table(whichMinVar4)/length(whichMinVar4)
-    
-    normalizationFactors(dds.M4) <- normFactorsM4
-    
-    dds.M4 <- estimateDispersions(dds.M4)
-    dds.M4 <- nbinomWaldTest(dds.M4)
-  }
+  # # if (norm == "minvar"){
+  # #   
+  # #   M4stand <- counts(dds.M4)/nsf
+  # #   M4chic <- counts(dds.M4)/nfM3
+  # #   
+  # #   varsM4 <- data.frame(varFullmean = rowVars(M4chic),
+  # #                        varStandard = rowVars(M4stand))
+  # #   varsM4 <- cbind(varsM4, nfM3)
+  # #     
+  # #   normFactorsM4 <- t(apply(varsM4,1,function(x){
+  # #       if(x["varFullmean"]<x["varStandard"]) { x[3:(2+nSamples)] }
+  # #       else { nullSizeFactors }
+  # #   }))
+  # #   
+  #   # purely for diagnostic purposes    
+  #   whichMinVar4 <- apply(varsM4, 1, function(x)which(x[1:2]==min(x[1:2]))[1])
+  #   table(whichMinVar4)/length(whichMinVar4)
+  #   
+  #   normalizationFactors(dds.M4) <- normFactorsM4
+  #   
+  #   dds.M4 <- estimateDispersions(dds.M4)
+  #   dds.M4 <- nbinomWaldTest(dds.M4)
+  # }
     
   ##model 5) use a weighted mean of fullMean or DESeq2 scaling factors
   ##that minimises the overall variance of the counts 
-  ##for a given interaction across all replicates and conditions
+  ##for the whole sample
   
   if (norm=="minvar_weighted"){
+    
+    message("Optimising scaling factors...")
+    
     glen = length(Grid)
-    grid_normFactorsM5 <- matrix(nrow=nrow(normFactorsM3),ncol=glen*nSamples)
-    varsM5 = matrix(nrow = nrow(normFactorsM3),ncol=glen)
+    # grid_normFactorsM5 <- matrix(nrow=nrow(normFactorsM3),ncol=glen*nSamples)
+    # varsM5 = matrix(nrow = nrow(normFactorsM3),ncol=glen)
     i = 1
+    deviances = vector("numeric", length=glen)
     for(tt in Grid){
       
       sc <- normFactorsM3*(1-tt)+nsf*tt
@@ -1585,29 +1588,53 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
       
       sc <- sc / exp(rowMeans(log(sc)))
       
-      grid_normFactorsM5[,(1+(i-1)*nSamples):(i*nSamples)] <- sc
+      normalizationFactors(dds.M5) <- sc
+
+      dds.M5 <- estimateDispersions(dds.M5)
+      dds.M5 <- nbinomWaldTest(dds.M5)
+      
+      deviances[i] = sum(mcols(dds.M5)$deviance)
+      
+      # grid_normFactorsM5[,(1+(i-1)*nSamples):(i*nSamples)] <- sc
         
-      varsM5[,i] <- t(rowVars(counts(dds.M5)/sc))
+      # varsM5[,i] <- t(rowVars(counts(dds.M5)/sc))
       
       i=i+1
       
     }
-    varsM5 <- cbind(varsM5, grid_normFactorsM5)
     
-    normFactorsM5 <- t(apply(varsM5,1,function(x){
-      whichminvar <- which(x[1:glen]==min(x[1:glen]))[1]
-      x[(1+glen+(whichminvar-1)*nSamples):(glen+whichminvar*nSamples)]
-    }))
+    tt = Grid[which(deviances==min(deviances)[1])]
     
-    # Purely for diagnostic purposes    
-    whichMinVar5 <- apply(varsM5, 1, function(x)
-      which(x[1:glen]==min(x[1:glen]))[1])
-      
-    normalizationFactors(dds.M5) <- normFactorsM5
-  
+    message("Theta=", tt)
+    
+    sc <- normFactorsM3*(1-tt)+nsf*tt
+    # sc <- exp (log(normFactorsM3)*(1-tt)+log(nsf)*tt)
+    
+    sc <- sc / exp(rowMeans(log(sc)))
+    
+    normalizationFactors(dds.M5) <- sc
+    
     dds.M5 <- estimateDispersions(dds.M5)
     dds.M5 <- nbinomWaldTest(dds.M5)
+    
+    # varsM5 <- cbind(varsM5, grid_normFactorsM5)
+    # 
+    # normFactorsM5 <- t(apply(varsM5,1,function(x){
+    #   whichminvar <- which(x[1:glen]==min(x[1:glen]))[1]
+    #   x[(1+glen+(whichminvar-1)*nSamples):(glen+whichminvar*nSamples)]
+    # }))
+    # 
+    # # Purely for diagnostic purposes    
+    # whichMinVar5 <- apply(varsM5, 1, function(x)
+    #   which(x[1:glen]==min(x[1:glen]))[1])
+      
+    # normalizationFactors(dds.M5) <- normFactorsM5
+    # 
+    # dds.M5 <- estimateDispersions(dds.M5)
+    # dds.M5 <- nbinomWaldTest(dds.M5)
   }
+  
+
   
   ##get annotation information -----------
   
@@ -1647,18 +1674,18 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
     res = results(dds.M4)
     message("Minvar normalisation: # unweighted interactions with padj<0.05: ",
             nrow(res[res$padj<0.05 & !is.na(res$padj),]))
-    message("Scaling factors used for normalisation")
-    print(matrix(table(whichMinVar4)/length(whichMinVar4), nrow=1,
-                 dimnames=list("% cases", c("Fullmean", "Standard"))))
+    # message("Scaling factors used for normalisation")
+    # print(matrix(table(whichMinVar4)/length(whichMinVar4), nrow=1,
+    #              dimnames=list("% cases", c("Fullmean", "Standard"))))
   }
   if (norm == "minvar_weighted"){
     res = results(dds.M5)
     message("Minvar_weighted normalisation: # unweighted interactions with padj<0.05: ",
             nrow(res[res$padj<0.05 & !is.na(res$padj),]))
-    message("Weights of standard [vs Fullmean] scaling factors used for normalisation")
-    w = matrix(c(Grid, table(whichMinVar5)/length(whichMinVar5)), nrow=2, byrow=T, 
-               dimnames = list(c("weight", "% cases")))
-    print(w)
+    # message("Weights of standard [vs Fullmean] scaling factors used for normalisation")
+    # w = matrix(c(Grid, table(whichMinVar5)/length(whichMinVar5)), nrow=2, byrow=T, 
+    #            dimnames = list(c("weight", "% cases")))
+    # print(w)
   }
   
   results <- as.data.table(as.data.frame(res), keep.rownames = "id")
@@ -1671,16 +1698,6 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   if(saveRDS == TRUE){
     message("Saving model RDS")
     saveRDS(out, paste0("./out_norm_", norm, suffix, ".Rds"))
-    
-    if(tolower(norm) == "minvar"){
-      message("Saving varinfo RDS")
-      saveRDS(varsM4[,1:2], paste0("./varinfo_minvar_", suffix, ".Rds"))
-    }
-    if(tolower(norm) == "minvar_weighted"){
-      message("Saving varinfo RDS")
-      saveRDS(varsM5[,1:length(Grid)], paste0("./varinfo_minvar_weighted_", suffix, ".Rds"))
-    }
-    
   }
   
   out 
