@@ -290,7 +290,11 @@ chicdiffPipeline <- function(defchic.settings, outprefix=NULL, printMemory=TRUE)
   DESeqOut <- DESeq2Wrap(defchic.settings, RU, FullRegionData[[1]])
   
   message("\n*** Running DESeq2Wrap for FullControlRegion\n")
-  DESeqOutControl <- DESeq2Wrap(defchic.settings, RUcontrol, FullRegionData[[2]], suffix = "Control") 
+  if(defchic.settings[["norm"]]=="minvar_weighted"  & is.null(attributes(DESeqOut)$theta)){
+    message("Normalisation weight theta is not defined and its inference may fail on control regions")
+  }
+  DESeqOutControl <- DESeq2Wrap(defchic.settings, RUcontrol, FullRegionData[[2]], 
+                                suffix = "Control", theta = attributes(DESeqOut)$theta) 
   
   message("\n*** Running IHWcorrection\n")
   output <- IHWcorrection(defchic.settings, DESeqOut, FullRegionData[[1]], DESeqOutControl, FullRegionData[[2]], countput = FullRegionData[[3]]) 
@@ -717,9 +721,6 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
     
     saveRDS(countput, "countput.Rds")
   }
-  
-  
-  message("out of iterative reading function")
   
   baits <- sort(unique(RU$baitID)) ##baits to get information from
   
@@ -1440,7 +1441,7 @@ geoMean <- function(x, na.rm=FALSE) {
 
 #------------------------------------------------------------------------------#
 
-DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
+DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = "", theta = NULL){
   
   norm = defchic.settings[["norm"]]
   Grid = defchic.settings[["weights_grid"]]
@@ -1506,7 +1507,7 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   
   ##model 2) skipped
   
-  browser()
+  #browser()
   
   ##model 3) use fullMean scaling factors
   if (norm != "standard"){
@@ -1573,40 +1574,49 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   ##for the whole sample
   
   if (norm=="minvar_weighted"){
+  
+    tt = theta
     
-    message("Optimising scaling factors...")
-    
-    glen = length(Grid)
-    # grid_normFactorsM5 <- matrix(nrow=nrow(normFactorsM3),ncol=glen*nSamples)
-    # varsM5 = matrix(nrow = nrow(normFactorsM3),ncol=glen)
-    i = 1
-    deviances = vector("numeric", length=glen)
-    for(tt in Grid){
+    if(is.null(tt)){
       
-      sc <- normFactorsM3*(1-tt)+nsf*tt
-      # sc <- exp (log(normFactorsM3)*(1-tt)+log(nsf)*tt)
+      message("Optimising scaling factors...")
       
-      sc <- sc / exp(rowMeans(log(sc)))
-      
-      normalizationFactors(dds.M5) <- sc
-
-      dds.M5 <- estimateDispersions(dds.M5)
-      dds.M5 <- nbinomWaldTest(dds.M5)
-      
-      deviances[i] = sum(mcols(dds.M5)$deviance)
-      
-      # grid_normFactorsM5[,(1+(i-1)*nSamples):(i*nSamples)] <- sc
+      glen = length(Grid)
+      # grid_normFactorsM5 <- matrix(nrow=nrow(normFactorsM3),ncol=glen*nSamples)
+      # varsM5 = matrix(nrow = nrow(normFactorsM3),ncol=glen)
+      i = 1
+      deviances = vector("numeric", length=glen)
+      for(tt in Grid){
         
-      # varsM5[,i] <- t(rowVars(counts(dds.M5)/sc))
+        sc <- normFactorsM3*(1-tt)+nsf*tt
+        # sc <- exp (log(normFactorsM3)*(1-tt)+log(nsf)*tt)
+        
+        sc <- sc / exp(rowMeans(log(sc)))
+        
+        normalizationFactors(dds.M5) <- sc
+  
+        dds.M5 <- estimateDispersions(dds.M5)
+        dds.M5 <- nbinomWaldTest(dds.M5)
+        
+        deviances[i] = sum(mcols(dds.M5)$deviance)
+        
+        # grid_normFactorsM5[,(1+(i-1)*nSamples):(i*nSamples)] <- sc
+          
+        # varsM5[,i] <- t(rowVars(counts(dds.M5)/sc))
+        
+        i=i+1
+        
+      }
       
-      i=i+1
+      message("Total deviances by theta (Fullmean --> Standard):")
+      print(deviances)
       
-    }
-    
-    tt = Grid[which(deviances==min(deviances)[1])]
+      tt = Grid[which(deviances==min(deviances)[1])]
+      
+    } 
     
     message("Theta=", tt)
-    
+
     sc <- normFactorsM3*(1-tt)+nsf*tt
     # sc <- exp (log(normFactorsM3)*(1-tt)+log(nsf)*tt)
     
@@ -1699,6 +1709,8 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
     message("Saving model RDS")
     saveRDS(out, paste0("./out_norm_", norm, suffix, ".Rds"))
   }
+  
+  attributes(out)$theta <- tt
   
   out 
 
