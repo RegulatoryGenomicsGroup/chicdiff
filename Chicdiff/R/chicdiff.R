@@ -1586,6 +1586,11 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = "", theta 
       # varsM5 = matrix(nrow = nrow(normFactorsM3),ncol=glen)
       i = 1
       deviances = vector("numeric", length=glen)
+      
+      ddsTest <- DESeqDataSetFromMatrix(countData = regionDataMatrix,
+                                        colData = colData,
+                                        design = ~ 1) # sic!
+      
       for(tt in Grid){
         
         sc <- normFactorsM3*(1-tt)+nsf*tt
@@ -1593,12 +1598,13 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = "", theta 
         
         sc <- sc / exp(rowMeans(log(sc)))
         
-        normalizationFactors(dds.M5) <- sc
-  
-        dds.M5 <- estimateDispersions(dds.M5)
-        dds.M5 <- nbinomWaldTest(dds.M5)
         
-        deviances[i] = sum(mcols(dds.M5)$deviance)
+        normalizationFactors(ddsTest) <- sc
+  
+        ddsTest <- estimateDispersions(ddsTest)
+        ddsTest <- nbinomWaldTest(ddsTest)
+        
+        deviances[i] = sum(mcols(ddsTest)$deviance)
         
         # grid_normFactorsM5[,(1+(i-1)*nSamples):(i*nSamples)] <- sc
           
