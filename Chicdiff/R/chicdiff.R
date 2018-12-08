@@ -1716,7 +1716,8 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = "", theta 
     saveRDS(out, paste0("./out_norm_", norm, suffix, ".Rds"))
   }
   
-  attributes(out)$theta <- tt
+  if(exists("tt"))
+    attributes(out)$theta <- tt
   
   out 
 
