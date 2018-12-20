@@ -12,8 +12,9 @@ defaultchicSettings <- function()
     baitmapfile= NA,
     RUexpand= 5L, 
     score= 5,
-    norm="minvar_weighted", 
-    weights_grid = seq(0,1,0.25),
+    norm="combined", 
+    theta = NULL,
+    theta_grid = seq(0,1,0.25),
     saveRDS = FALSE,
     parallel = FALSE,
     device = "png",
@@ -138,8 +139,8 @@ setChicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
   
   defchic.settings[["norm"]] = tolower(defchic.settings[["norm"]])
   if (length(defchic.settings[["norm"]])>1){ stop ("Parameter error: Only one normalisation method can be specified at a time") }
-  if (!defchic.settings[["norm"]] %in% c("standard", "fullmean", "minvar", "minvar_weighted")){
-    stop ("Parameter error: normalisation method should be one of 'standard', 'fullmean', 'minvar', 'minvar_weighted'")
+  if (!defchic.settings[["norm"]] %in% c("standard", "fullmean", "minvar", "combined")){
+    stop ("Parameter error: normalisation method should be one of 'standard', 'fullmean', 'minvar', 'combined'")
   }  
   
   message("Checking the design files...")
@@ -290,8 +291,10 @@ chicdiffPipeline <- function(defchic.settings, outprefix=NULL, printMemory=TRUE)
   DESeqOut <- DESeq2Wrap(defchic.settings, RU, FullRegionData[[1]])
   
   message("\n*** Running DESeq2Wrap for FullControlRegion\n")
-  if(defchic.settings[["norm"]]=="minvar_weighted"  & is.null(attributes(DESeqOut)$theta)){
-    message("Normalisation weight theta is not defined and its inference may fail on control regions")
+  if(defchic.settings[["norm"]]=="combined" & 
+     is.null(attributes(DESeqOut)$theta) & 
+     is.null(defchic.settings[["theta"]])){
+    warning("Normalisation weight theta is not defined and its inference may fail on control regions")
   }
   DESeqOutControl <- DESeq2Wrap(defchic.settings, RUcontrol, FullRegionData[[2]], 
                                 suffix = "Control", theta = attributes(DESeqOut)$theta) 
@@ -1443,11 +1446,29 @@ geoMean <- function(x, na.rm=FALSE) {
 
 DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = "", theta = NULL){
   
-  norm = defchic.settings[["norm"]]
-  Grid = defchic.settings[["weights_grid"]]
+  Grid = defchic.settings[["theta_grid"]]
   rmapfile = defchic.settings[["rmapfile"]]
   saveRDS = defchic.settings[["saveRDS"]]
   
+  if (is.null(theta) & !is.null(defchic.settings[["theta"]])){
+    theta = defchic.settings[["theta"]]
+    #message("Mixing parameter theta set to the user-specified value of ", theta)
+  }
+
+  norm = defchic.settings[["norm"]]
+  
+  if (!is.null(theta)){
+    if(theta == 1 & norm!="standard"){
+      warning("Mixing parameter theta set to 1, equivalent to norm = \"standard\". The norm method has been reset accordingly.")
+      norm = "standard"
+    }
+    
+    if(!theta & norm!="fullmean"){
+      warning("Mixing parameter theta set to 0, equivalent to norm = \"fullmean\". The norm method has been reset accordingly.")
+      norm = "fullmean"
+    }
+  }
+    
   ##Input data:
   
   fragData <- copy(FullRegionData) ## As otherwise it is altered by reference below and the IHW part breaks
@@ -1495,7 +1516,7 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = "", theta 
   if(norm =="minvar"){
     dds.M4 <- copy(dds.nullModel)
   }
-  if(norm == "minvar_weighted"){
+  if(norm == "combined"){
     dds.M5 <- copy(dds.nullModel)
   }
 
@@ -1534,46 +1555,18 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = "", theta 
     dds.M3 <- nbinomWaldTest(dds.M3)
   }
   
-  if (norm %in% c("minvar", "minvar_weighted")){
+  if (norm %in% c("minvar", "combined")){
     nsf = matrix(rep(nullSizeFactors,nrow(normFactorsM3)), 
                  ncol=nSamples, nrow=nrow(normFactorsM3), byrow=T) 
   }
   
-  ##model 4) use fullMean or DESeq2 scaling factors, 
-  ##depending on what gives lower overall variance of the counts
-  ##for a given interaction across all replicates and conditions
-  ##In fact, it's just model (5) with Grid = c(0,1),
-  ##but for historical reasons it's coded separately
-  
-  # # if (norm == "minvar"){
-  # #   
-  # #   M4stand <- counts(dds.M4)/nsf
-  # #   M4chic <- counts(dds.M4)/nfM3
-  # #   
-  # #   varsM4 <- data.frame(varFullmean = rowVars(M4chic),
-  # #                        varStandard = rowVars(M4stand))
-  # #   varsM4 <- cbind(varsM4, nfM3)
-  # #     
-  # #   normFactorsM4 <- t(apply(varsM4,1,function(x){
-  # #       if(x["varFullmean"]<x["varStandard"]) { x[3:(2+nSamples)] }
-  # #       else { nullSizeFactors }
-  # #   }))
-  # #   
-  #   # purely for diagnostic purposes    
-  #   whichMinVar4 <- apply(varsM4, 1, function(x)which(x[1:2]==min(x[1:2]))[1])
-  #   table(whichMinVar4)/length(whichMinVar4)
-  #   
-  #   normalizationFactors(dds.M4) <- normFactorsM4
-  #   
-  #   dds.M4 <- estimateDispersions(dds.M4)
-  #   dds.M4 <- nbinomWaldTest(dds.M4)
-  # }
+  ## model 4) skipped
     
   ##model 5) use a weighted mean of fullMean or DESeq2 scaling factors
   ##that minimises the overall variance of the counts 
   ##for the whole sample
   
-  if (norm=="minvar_weighted"){
+  if (norm=="combined"){
   
     tt = theta
     
@@ -1604,7 +1597,7 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = "", theta 
         ddsTest <- estimateDispersions(ddsTest)
         ddsTest <- nbinomWaldTest(ddsTest)
         
-        deviances[i] = sum(mcols(ddsTest)$deviance)
+        deviances[i] = median(mcols(ddsTest)$deviance)
         
         # grid_normFactorsM5[,(1+(i-1)*nSamples):(i*nSamples)] <- sc
           
@@ -1694,9 +1687,9 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = "", theta 
     # print(matrix(table(whichMinVar4)/length(whichMinVar4), nrow=1,
     #              dimnames=list("% cases", c("Fullmean", "Standard"))))
   }
-  if (norm == "minvar_weighted"){
+  if (norm == "combined"){
     res = results(dds.M5)
-    message("Minvar_weighted normalisation: # unweighted interactions with padj<0.05: ",
+    message("combined normalisation: # unweighted interactions with padj<0.05: ",
             nrow(res[res$padj<0.05 & !is.na(res$padj),]))
     # message("Weights of standard [vs Fullmean] scaling factors used for normalisation")
     # w = matrix(c(Grid, table(whichMinVar5)/length(whichMinVar5)), nrow=2, byrow=T, 
@@ -1976,6 +1969,10 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
   out$weight <- out$avWeights/mean(out$avWeights) ##renormalize
   out[,weighted_pvalue := pvalue/weight]
   
+  # out[is.na(weighted_pvalue) | weighted_pvalue>1, weighted_pvalue:=1]
+
+  out[, weighted_padj := p.adjust(weighted_pvalue, method="BH")]
+  
   message("applied to test data")
   
   
@@ -1994,18 +1991,29 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
 }
 
 
-getCandidateInteractions <- function(defchic.settings, output, peakFiles, pvcut, deltaAsinhScore){
+getCandidateInteractions <- function(defchic.settings, output, peakFiles, 
+                                     pcol = "weighted_padj",
+                                     method = c("min", "hmp")[1], 
+                                     deltaAsinhScore=1,                                      
+                                     pvcut = 0.05){
   
   targetRDSorRDAs = defchic.settings[["targetRDSorRDAs"]]
   peakFiles <- fread(peakFiles)
-  output <- readRDS(output)
   
-  res <- output[weighted_pvalue < pvcut]
-  setkey(res, baitID, minOE, maxOE)
+  if(is.character(output)){
+    output <- readRDS(output)
+  }
+  
+  if (!method %in% c("min", "hmp")){
+      stop ("getCandidateInteractions error: Unknown method to combine p-values (should be 'min' or 'hmp')")
+  }
+  setkey(output, baitID, minOE, maxOE)
   
   peakFiles <- peakFiles[,oeID1:=oeID]
+
+  #res <- output[get(pcol) < pvcut]
   
-  outpeak <- foverlaps(peakFiles, res, by.x=c("baitID", "oeID", "oeID1"), by.y=c("baitID", "minOE", "maxOE"), nomatch =0, mult = "all")
+  outpeak <- foverlaps(peakFiles, output, by.x=c("baitID", "oeID", "oeID1"), by.y=c("baitID", "minOE", "maxOE"), nomatch =0, mult = "all")
   
   if(!is.null(names(targetRDSorRDAs[[1]]))){ # replicate-level peakFile
     outpeak[,cond1mean:= asinh(rowMeans(.SD)), .SDcols=names(targetRDSorRDAs[[1]])]
@@ -2018,23 +2026,29 @@ getCandidateInteractions <- function(defchic.settings, output, peakFiles, pvcut,
     outpeak[,delta:=abs(get(names(targetRDSorRDAs)[2])-get(names(targetRDSorRDAs)[1]))] 
   }
   
-  outpeak<- outpeak[delta > deltaAsinhScore]
-  
+  pcol_out = ifelse(method=="min", paste0("min_", pcol), 
+                    paste0("hm_", pcol))
+
   # This is to include the columns whose names are listed in names(targetRDSorRDAs[[n]]) and are unknown a priori
   expr = paste0('list( 
-                baitChr=baitChr[1], baitstart=baitstart[1], 
+                baitChr = baitChr[1], baitstart = baitstart[1], 
                 baitend = baitend[1], baitName = baitName[1],',
-                paste(names(targetRDSorRDAs[[1]]), collapse=","), ",",
-                paste(names(targetRDSorRDAs[[2]]), collapse=","), 
-                ', deltaAsinhScore = delta[1],
+                paste(names(targetRDSorRDAs)[1], collapse=","), ',',
+                paste(names(targetRDSorRDAs)[2], collapse=","), ',',
+                ifelse(method=="min", paste0(pcol_out, "=min(", pcol, ")"), 
+                              paste0(pcol_out, "=p.hmp(", pcol, ")")),      
+                ', 
+              deltaAsinhScore = delta[1],
               regionIDs = paste(regionID, collapse=","),
-              log2FoldChanges = paste(log2FoldChange, collapse = ","),
-              weighted_pvalues = paste(weighted_pvalue, collapse = ","),  
+              log2FoldChanges = paste(log2FoldChange, collapse = ","), 
+               ',
+              pcol, ' = paste(', pcol, ', collapse = ","),  
               OEranges = paste(OEstart, OEend, sep = "-", collapse= ","))
               ')
-  # view with parse(text=expr)  
+  # print (parse(text=expr) )
   final <- outpeak[, eval(parse(text=expr)),  by=c("baitID", "oeID")]
   
-  final
+  final[get(pcol_out) <= pvcut]
+
   
 }
