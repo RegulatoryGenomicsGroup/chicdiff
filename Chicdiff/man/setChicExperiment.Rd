@@ -1,5 +1,5 @@
-\name{setchicExperiment}
-\alias{setchicExperiment}
+\name{setChicExperiment}
+\alias{setChicExperiment}
 \title{
 Set experiment
 }

@@ -2005,7 +2005,8 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
 }
 
 
-getCandidateInteractions <- function(defchic.settings, output, peakFiles, 
+getCandidateInteractions <- function(output, peakFiles, 
+                                     defchic.settings, 
                                      pcol = "weighted_padj",
                                      method = c("min", "hmp")[1], 
                                      deltaAsinhScore=1,                                      
