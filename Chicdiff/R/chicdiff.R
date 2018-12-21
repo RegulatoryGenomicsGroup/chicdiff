@@ -115,11 +115,12 @@ setChicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
   
   targetColumns <- .getTargetColumns(targetRDSorRDAs)
   defchic.settings[["targetColumns"]] = targetColumns
-  peakfile_columns <- colnames(.multimerge(peakfiles))
   
-  if(!all(targetColumns %in% peakfile_columns)){
-    stop("All specified columns must be present in the peak files")  
-  }
+  # peakfile_columns <- colnames(.multimerge(peakfiles))
+  
+  #if(!all(targetColumns %in% peakfile_columns)){
+  #  stop("All specified columns must be present in the peak files")  
+  #}
   
   if(is.na(defchic.settings[["baitmapfile"]]) | (updateDesign & !is.null(designDir))){
     defchic.settings[["baitmapfile"]] = .locateFile("<baitmapfile>.baitmap", designDir, "\\.baitmap$")
@@ -139,8 +140,8 @@ setChicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
   
   defchic.settings[["norm"]] = tolower(defchic.settings[["norm"]])
   if (length(defchic.settings[["norm"]])>1){ stop ("Parameter error: Only one normalisation method can be specified at a time") }
-  if (!defchic.settings[["norm"]] %in% c("standard", "fullmean", "minvar", "combined")){
-    stop ("Parameter error: normalisation method should be one of 'standard', 'fullmean', 'minvar', 'combined'")
+  if (!defchic.settings[["norm"]] %in% c("standard", "fullmean", "combined")){
+    stop ("Parameter error: normalisation method should be one of 'standard', 'fullmean', 'combined'")
   }  
   
   message("Checking the design files...")
@@ -206,10 +207,17 @@ setChicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
 
 #-------------------------------Auxilliary functions-----------------------------------------------#
 
-.multimerge <- function(peakFiles)
+.multimerge <- function(peakFiles, targetColumns)
 {
-  templist <- lapply(peakFiles, fread)
-  peakMatrix <- Reduce(merge, templist)
+  peakDTs <- lapply(peakFiles, fread)
+  peakMatrix <- Reduce(function(x,y)
+    merge(x, y, 
+      by=c("baitChr","baitStart","baitEnd","baitID",         
+        "baitName","oeChr","oeStart","oeEnd",          
+         "oeID","oeName","dist"), all=T), peakDTs)
+  for(tc in targetColumns){
+    peakMatrix[is.na(get(tc)), c(tc):=0]
+  }
   peakMatrix
 }
 
@@ -217,10 +225,17 @@ readAndFilterPeakMatrix <- function(peakFiles, targetColumns, targetRDSorRDAs, c
   ## Essentially reads in the peak matrix, taking the target columns if specified (else just takes everything) and filters for rows where at least
   ##one score is > 5 (or whatever is specified) and filters out trans interactions. 
   if(length(peakFiles > 1)){
-    x <- .multimerge(peakFiles)
+    x <- .multimerge(peakFiles, targetColumns)
   } else {
     x <- fread(peakFiles)
   }
+
+  peakfile_columns <- colnames(x)
+  
+  if(!all(targetColumns %in% peakfile_columns)){
+    stop("All specified targetColumns must be present in the peak file(s)")  
+  }
+  
   all_baits <- unique(x$baitID)
   sel <- which(colnames(x) %in% targetColumns)
   x <- x[,c(1:11, sel), with=FALSE]
@@ -2012,18 +2027,18 @@ getCandidateInteractions <- function(defchic.settings, output, peakFiles,
 
   #res <- output[get(pcol) < pvcut]
   
-  outpeak <- foverlaps(peakFiles, output, by.x=c("baitID", "oeID", "oeID1"), by.y=c("baitID", "minOE", "maxOE"), nomatch =0, mult = "all")
-  
   if(!is.null(names(targetRDSorRDAs[[1]]))){ # replicate-level peakFile
-    outpeak[,cond1mean:= asinh(rowMeans(.SD)), .SDcols=names(targetRDSorRDAs[[1]])]
-    outpeak[,cond2mean:= asinh(rowMeans(.SD)), .SDcols=names(targetRDSorRDAs[[2]])]
-    outpeak[,delta:=abs(cond1mean-cond2mean)]  
-    outpeak[,cond1mean:=NULL]
-    outpeak[,cond2mean:=NULL]
+    peakFiles[,cond1mean:= asinh(rowMeans(.SD)), .SDcols=names(targetRDSorRDAs[[1]])]
+    peakFiles[,cond2mean:= asinh(rowMeans(.SD)), .SDcols=names(targetRDSorRDAs[[2]])]
+    peakFiles[,delta:=abs(cond1mean-cond2mean)]  
+    peakFiles[,cond1mean:=NULL]
+    peakFiles[,cond2mean:=NULL]
   }
   else{ # merged peakFile
-    outpeak[,delta:=abs(get(names(targetRDSorRDAs)[2])-get(names(targetRDSorRDAs)[1]))] 
+    peakFiles[,delta:=abs(get(names(targetRDSorRDAs)[2])-get(names(targetRDSorRDAs)[1]))] 
   }
+  
+  outpeak <- foverlaps(peakFiles, output, by.x=c("baitID", "oeID", "oeID1"), by.y=c("baitID", "minOE", "maxOE"), nomatch =0, mult = "all")
   
   pcol_out = ifelse(method=="min", paste0("min_", pcol), 
                     paste0("hm_", pcol))
