@@ -1597,7 +1597,8 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = "", theta 
         ddsTest <- estimateDispersions(ddsTest)
         ddsTest <- nbinomWaldTest(ddsTest)
         
-        deviances[i] = median(mcols(ddsTest)$deviance)
+        #deviances[i] = median(mcols(ddsTest)$deviance)
+        deviances[i] = sum(mcols(ddsTest)$deviance)
         
         # grid_normFactorsM5[,(1+(i-1)*nSamples):(i*nSamples)] <- sc
           
