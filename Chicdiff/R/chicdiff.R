@@ -1970,8 +1970,6 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
   out$weight <- out$avWeights/mean(out$avWeights) ##renormalize
   out[,weighted_pvalue := pvalue/weight]
   
-  # out[is.na(weighted_pvalue) | weighted_pvalue>1, weighted_pvalue:=1]
-
   out[, weighted_padj := p.adjust(weighted_pvalue, method="BH")]
   
   message("applied to test data")
@@ -2029,7 +2027,11 @@ getCandidateInteractions <- function(defchic.settings, output, peakFiles,
   
   pcol_out = ifelse(method=="min", paste0("min_", pcol), 
                     paste0("hm_", pcol))
-
+  
+  if(method=="hmp"){
+    outpeak[is.na(get(pcol)) | get(pcol)>1, c(pcol):=1]
+  }
+  
   # This is to include the columns whose names are listed in names(targetRDSorRDAs[[n]]) and are unknown a priori
   expr = paste0('list( 
                 baitChr = baitChr[1], baitstart = baitstart[1], 
@@ -2047,6 +2049,7 @@ getCandidateInteractions <- function(defchic.settings, output, peakFiles,
               OEranges = paste(OEstart, OEend, sep = "-", collapse= ","))
               ')
   # print (parse(text=expr) )
+  
   final <- outpeak[, eval(parse(text=expr)),  by=c("baitID", "oeID")]
   
   final[get(pcol_out) <= pvcut]
