@@ -1748,7 +1748,8 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = "", theta 
 #-----------------------------IHW and plotting functions-------------------------------#
 
 plotdiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, plotBaitNames = TRUE, 
-                          plotBaitIDs = TRUE, plevel1 = 5, plevel2 = 3, xlim=c(-1e6,1e6), bgCol = "black", 
+                          plotBaitIDs = TRUE, pcol="weighted_padj", 
+                          plevel1 = 5, plevel2 = 3, xlim=c(-1e6,1e6), bgCol = "black", 
                           lev1Col = "red", lev2Col = "blue", ...){
   
   if(any(class(output) == "character")){
@@ -1783,7 +1784,7 @@ plotdiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, pl
   
   conditions <- unique(countput_coord[,condition])
   
-  out[, names(out)[!(names(out) %in% c("OEstart", "OEend","baitID", "weighted_pvalue"))] := NULL]
+  out[, names(out)[!(names(out) %in% c("OEstart", "OEend","baitID", pcol))] := NULL]
   
   colnames(bmap) <- c("chr", "start", "end", "baitID", "name")
   bmap[, chr := NULL]
@@ -1863,7 +1864,7 @@ plotdiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, pl
     
     merged_dat <- merge(dat, temp_out, by = c("OEstart", "OEend"))
     merged_dat[,width := NULL]
-    merged_dat[,minuslogpvalue := -log10(weighted_pvalue)]
+    merged_dat[,minuslogpvalue := -log10(get(pcol))]
     
     merged_dat[minuslogpvalue <= -log(0.05), pvalue_param := "blue"]
     merged_dat[minuslogpvalue <= -log10(0.005) & minuslogpvalue > -log10(0.05), pvalue_param := "light red"]
@@ -1991,7 +1992,7 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
   
   
   if (diffbaitPlot == TRUE){
-    sel <- order(out$weighted_pvalue)
+    sel <- order(out$weighted_padj)
     baits <- sample(head(unique(out[sel]$baitID), 100), 4)
     plotdiffBaits(output = out, countput = countput, baitmapfile = baitmapfile, baits = baits)
     cowplot::ggsave(paste0("diffbaitPlot",".",device), device = device, path = "./")

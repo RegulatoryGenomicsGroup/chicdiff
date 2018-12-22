@@ -203,7 +203,7 @@ We see that the general trend is driven by the covariate (stratum) (distance in 
 
 # Vizualizing differential interactions
 
-The plotdiffBaits() function can be used to plot the raw read counts versus linear distance from bait, mirrored for compared conditions. Significant Interactions are represented as intervals, labelled in a different colour, according to the attributed weighted pvalue.
+The ```plotdiffBaits()``` function can be used to plot the raw read counts versus linear distance from bait, mirrored for compared conditions. Significant Interactions are represented as intervals, labelled in a different colour, according to the attributed weighted pvalue.
 
 ```{r}
 IHWweightPlot <- png::readPNG(file.path(resultsPath,"diffbaitPlot.png"))
@@ -212,7 +212,7 @@ grid::grid.raster(IHWweightPlot)
 
 By default Chicdiff produces a plot, showing four random baits from the top 100 baits, containing interactions with the lowest weighted pvalue. Interactions within 1 Mb from bait are shown, with those passing the threshold of 5 colored in red and those passing the more lenient threshold of 3 shown in blue. Those interactions that are passing the threshold of 5 go through the Chicdiff pipeline. To gain the statistical power the otherEnd under evaluation will be expanded to an interval, which will be compared between conditions. Thus the weighted pvalue correpsonds not to an individual interaction but to an interaction of bait with an interval and is the result of several interactions withing that interval.
 
-Using the final Chicdiff output file, countput and the baitmap as inputs to *plotdiffBaits()* function the user can modify the number of baits to display or provide a set of defind baits to plot, as well as change the display parameters, such as color of interactions, the distance around the bait to display and others (see documentation of *plotdiffBaits*).
+Using the final Chicdiff output file, countput and the baitmap as inputs to ```plotdiffBaits()``` function the user can modify the number of baits to display or provide a set of defind baits to plot, as well as change the display parameters, such as color of interactions, the distance around the bait to display and others (see documentation for ```plotdiffBaits```).
 
 ```{r, warning=FALSE}
 mini_output <- readRDS(file.path(resultsPath, "Weighted.Rds"))
@@ -223,15 +223,14 @@ baits <- c(331172, 320562, 327700)
 plotdiffBaits(output = mini_output, countput = mini_countput, baitmapfile = bmap, baits = baits)
 ```
 
-# Association of the interaction interval with the *seed* otherEnd 
+# Prioritising individual fragments within differentially interacting regions  
 
-It is important to keep in mind that weighted_pvalue produced by Chicdiff correpsonds not to an individual interaction but to an interaction of bait with an interval and is the result of several interactions withing that interval.
+Unless the ```RUexpand``` setting is set to zero, Chicdiff works at the level of interactions between baits and pooled regions, containing multiple restriction fragments.
 
-To have an idea of fragments which interaction with the bait of interest contributed to the weighted pvalue users can user *getCandidateInteractions()* function.
+To obtain indications of differential signals at individual fragments, Chicdiff provides the function  ```getCandidateInteractions()```.
+
 
 ```{r}
-output = file.path(resultsPath, "Weighted.Rds")
-peakFiles = file.path(dataPath, "peakMatrix_cd4_mono_unmerged.txt")
 
 outpeak <- getCandidateInteractions(defchic.settings = defchic.settings, output = output, peakFiles = peakFiles, pvcut = 0.05, deltaAsinhScore =1)
 
