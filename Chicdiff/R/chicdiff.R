@@ -2027,11 +2027,25 @@ getCandidateInteractions <- function(output, peakFiles,
   
   peakFiles <- peakFiles[,oeID1:=oeID]
 
+  cond1names <- character(0)
+  if(length(names(targetRDSorRDAs[[1]]))){ 
+    cond1names <- names(targetRDSorRDAs[[1]])
+  }else{
+    cond1names <- names(targetRDSorRDAs)[1]
+  }
+                      
+  cond2names <- character(0)
+  if(length(names(targetRDSorRDAs[[2]]))){
+    cond2names <- names(targetRDSorRDAs[[2]])
+  }else{
+    cond2names <- names(targetRDSorRDAs)[2]
+  } 
+    
   #res <- output[get(pcol) < pvcut]
   
   if(!is.null(names(targetRDSorRDAs[[1]]))){ # replicate-level peakFile
-    peakFiles[,cond1mean:= asinh(rowMeans(.SD)), .SDcols=names(targetRDSorRDAs[[1]])]
-    peakFiles[,cond2mean:= asinh(rowMeans(.SD)), .SDcols=names(targetRDSorRDAs[[2]])]
+    peakFiles[,cond1mean:= asinh(rowMeans(.SD)), .SDcols=cond1names]
+    peakFiles[,cond2mean:= asinh(rowMeans(.SD)), .SDcols=cond2names]
     peakFiles[,delta:=abs(cond1mean-cond2mean)]  
     peakFiles[,cond1mean:=NULL]
     peakFiles[,cond2mean:=NULL]
@@ -2053,8 +2067,8 @@ getCandidateInteractions <- function(output, peakFiles,
   expr = paste0('list( 
                 baitChr = baitChr[1], baitstart = baitstart[1], 
                 baitend = baitend[1], baitName = baitName[1],',
-                paste(names(targetRDSorRDAs)[1], collapse=","), ',',
-                paste(names(targetRDSorRDAs)[2], collapse=","), ',',
+                paste0(cond1names, "[1]", collapse=","), ',',
+                paste0(cond2names, "[1]", collapse=","), ',',
                 ifelse(method=="min", paste0(pcol_out, "=min(", pcol, ")"), 
                               paste0(pcol_out, "=p.hmp(", pcol, ")")),      
                 ', 
@@ -2065,7 +2079,7 @@ getCandidateInteractions <- function(output, peakFiles,
               pcol, ' = paste(', pcol, ', collapse = ","),  
               OEranges = paste(OEstart, OEend, sep = "-", collapse= ","))
               ')
-  # print (parse(text=expr) )
+  print (parse(text=expr) )
   
   final <- outpeak[, eval(parse(text=expr)),  by=c("baitID", "oeID")]
   
