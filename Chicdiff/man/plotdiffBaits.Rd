@@ -5,7 +5,7 @@
 Plot differential baits
 }
 \description{
-This function is a part of IHW function. It plots n (n=3 by default) from top 100 differential baits. 
+This function plots the profiles of either user-specified baits of interest, or the top differential baits. 
 }
 \usage{
 plotDiffBaits(output, countput, baitmapfile, n = 3, baits = NULL, plotBaitNames = TRUE, plotBaitIDs = TRUE, pcol = "weighted_padj", plevel1 = 5, plevel2 = 3, xlim=c(-1e6,1e6), bgCol = "black", lev1Col = "red", lev2Col = "blue", ...)
