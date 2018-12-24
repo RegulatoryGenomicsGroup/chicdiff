@@ -94,7 +94,7 @@ dir(testDataPath_Mono)
 To run Chicdff *.chinput* files have to be presented in the follwing way:
 
 ```{r}
-targetChs <- list(
+countData <- list(
     CD4 = c(NCD4_22 = file.path(testDataPath_CD4, "unitTest_CD41.chinput"),
             NCD4_23 = file.path(testDataPath_CD4, "unitTest_CD42.chinput")
             ),
@@ -122,7 +122,7 @@ dir(testDataPath_rda)
 To run Chicdff *.Rda* files have to be presented in the follwing way:
 
 ```{r}
-targetRDSorRDAs <- list(
+chicagoData <- list(
   CD4 = c(NCD4_22 = file.path(testDataPath_rda, "unitTest_CD41.RDa"),
           NCD4_23 = file.path(testDataPath_rda, "unitTest_CD42.RDa")
           ),
@@ -134,31 +134,31 @@ targetRDSorRDAs <- list(
 ```
 
 ------ --------------------------------------------------------
-*NOTE* As for *targetChs*, the names of every file should match the column name of the correpsonding data set in the *peakfile* file.
+*NOTE* As for *countData*, the names of every file should match the column name of the correpsonding data set in the *peakfile* file.
 
 ---------------------------------------------------------------
 
 ## Example workflow
 
 We run Chicdiff on the test data as follows. 
-First, we set up chicdiff experiment settings with ``setChicExperiment()``:
+First, we set up chicdiff experiment settings with ``setChicdiffExperiment()``:
 
 
 ```{r, message=FALSE, warning = FALSE}
-defchic.settings <- setChicExperiment(designDir = testDesignDir, targetRDSorRDAs = targetRDSorRDAs, targetChs = targetChs, peakfiles = peakFiles)
+chicdiff.settings <- setChicdiffExperiment(designDir = testDesignDir, chicagoData = chicagoData, countData = countData, peakfiles = peakFiles, outprefix="test")
 ```
 
 OPTIONAL: You can modify settings directly in the command line. For example, to set up the running mode to parallel run the following line:
 
 ```{r, message=FALSE, warning = FALSE}
-defchic.settings <- setChicExperiment(designDir = testDesignDir, targetRDSorRDAs = targetRDSorRDAs, targetChs = targetChs, peakfiles = peakFiles, settings = list(parallel=TRUE))
+chicdiff.settings <- setChicdiffExperiment(designDir = testDesignDir, chicagoData = chicagoData, countData = countData, peakfiles = peakFiles, outprefix="test", settings = list(parallel=TRUE))
 ```
 
-Alternatively, you can provide your prefered parameters in a *settingsFile* file:
+Alternatively, you can provide your prefered parameters in a *settingsFile*:
 
 ```{r, message=FALSE, warning = FALSE}
 settingsFile = file.path(dataPath,"SettingsFile.txt")
-defchic.settings <- setChicExperiment(designDir = testDesignDir, targetRDSorRDAs = targetRDSorRDAs, targetChs = targetChs, peakfiles = peakFiles, settingsFile = settingsFile)
+chicdiff.settings <- setChicdiffExperiment(designDir = testDesignDir, chicagoData = chicagoData, countData = countData, peakfiles = peakFiles, outprefix="test", settingsFile = settingsFile)
 ```
 
 *Omit this step unless you know which settings you wish to alter*.
@@ -171,7 +171,7 @@ defchic.settings <- setChicExperiment(designDir = testDesignDir, targetRDSorRDAs
 Finally, we run the pipeline with ``chicdiffPipeline()``:
 
 ```{r, eval=FALSE}
-output <- chicdiffPipeline(defchic.settings)
+output <- chicdiffPipeline(chicdiff.settings)
 ```
 
 ## Output diagnostic plots 
@@ -179,7 +179,7 @@ output <- chicdiffPipeline(defchic.settings)
 ``chicdiffPipeline()`` produces a number of plots, that are saved in the working directory.
 
 The plots produced by Chicdiff for the chr19 datasets are provided in the *ChicdiffData* package.
-Note that the diagnostic plots are computed using only a small fraction of the full CD4 and Monocyte datasets. In real-world, genome-wide datasets the trends described below should be more pronounced. 
+Note that the diagnostic plots are computed using only a small fraction of the full CD4 and Monocyte datasets. In the real-world genome-wide datasets the trends described below should be more pronounced. 
 
 ### Decision boundary
 ```{r}
@@ -195,7 +195,7 @@ The trend is: low p-values are enriched at low covariate values. The higher the 
 
 ### Estimated weights
 ```{r}
-IHWweightPlot <- png::readPNG(file.path(resultsPath,"IHWweightPlot.png"))
+IHWweightPlot <- png::readPNG(file.path(resultsPath,"test_IHWweightPlot.png"))
 grid::grid.raster(IHWweightPlot)
 ```
 
@@ -206,21 +206,21 @@ We see that the general trend is driven by the covariate (stratum) (distance in 
 The ```plotdiffBaits()``` function can be used to plot the raw read counts versus linear distance from bait, mirrored for compared conditions. Significant Interactions are represented as intervals, labelled in a different colour, according to the attributed weighted pvalue.
 
 ```{r}
-IHWweightPlot <- png::readPNG(file.path(resultsPath,"diffbaitPlot.png"))
+IHWweightPlot <- png::readPNG(file.path(resultsPath,"test_diffbaitPlot.png"))
 grid::grid.raster(IHWweightPlot)
 ```
 
-By default Chicdiff produces a plot, showing four random baits from the top 100 baits, containing interactions with the lowest weighted pvalue. Interactions within 1 Mb from bait are shown, with those passing the threshold of 5 colored in red and those passing the more lenient threshold of 3 shown in blue. Those interactions that are passing the threshold of 5 go through the Chicdiff pipeline. To gain the statistical power the otherEnd under evaluation will be expanded to an interval, which will be compared between conditions. Thus the weighted pvalue correpsonds not to an individual interaction but to an interaction of bait with an interval and is the result of several interactions withing that interval.
+By default Chicdiff produces a plot showing four random baits from the top 100 baits, containing interactions with the lowest weighted pvalue. Interactions within 1 Mb from bait are shown, with those passing the threshold of 5 colored in red and those passing the more lenient threshold of 3 shown in blue. Those interactions that are passing the threshold of 5 go through the Chicdiff pipeline. To gain the statistical power the otherEnd under evaluation will be expanded to an interval, which will be compared between conditions. Thus the weighted pvalue correpsonds not to an individual interaction but to an interaction of bait with an interval and is the result of several interactions withing that interval.
 
 Using the final Chicdiff output file, countput and the baitmap as inputs to ```plotdiffBaits()``` function the user can modify the number of baits to display or provide a set of defind baits to plot, as well as change the display parameters, such as color of interactions, the distance around the bait to display and others (see documentation for ```plotdiffBaits```).
 
 ```{r, warning=FALSE}
-mini_output <- readRDS(file.path(resultsPath, "Weighted.Rds"))
-mini_countput <- readRDS(file.path(resultsPath, "countput.Rds"))
+results <- readRDS(file.path(resultsPath, "test_results.Rds"))
+countput <- readRDS(file.path(resultsPath, "test_countput.Rds"))
 bmap <- fread(file.path(testDesignDir, "chr19_GRCh37_HindIII.baitmap"))
 
 baits <- c(331172, 320562, 327700)
-plotdiffBaits(output = mini_output, countput = mini_countput, baitmapfile = bmap, baits = baits)
+plotDiffBaits(output = output, countput = countput, baitmapfile = bmap, baits = baits)
 ```
 
 # Prioritising individual fragments within differentially interacting regions  
@@ -229,11 +229,13 @@ Unless the ```RUexpand``` setting is set to zero, Chicdiff works at the level of
 
 To obtain indications of differential signals at individual fragments, Chicdiff provides the function  ```getCandidateInteractions()```.
 
+FIXME: To finish the docs
+
 
 ```{r}
 
-outpeak <- getCandidateInteractions(defchic.settings = defchic.settings, output = output, peakFiles = peakFiles, pvcut = 0.05, deltaAsinhScore =1)
+outCI <- getCandidateInteractions(chicdiff.settings = chicdiff.settings, output = output, peakFiles = peakFiles, pvcut = 0.05, deltaAsinhScore =1)
 
-head(outpeak)
+head(outCI)
 ```
 

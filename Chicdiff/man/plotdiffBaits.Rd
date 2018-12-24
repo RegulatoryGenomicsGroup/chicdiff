@@ -1,5 +1,5 @@
-\name{plotdiffBaits}
-\alias{plotdiffBaits}
+\name{plotDiffBaits}
+\alias{plotDiffBaits}
 
 \title{
 Plot differential baits
@@ -8,7 +8,7 @@ Plot differential baits
 This function is a part of IHW function. It plots n (n=3 by default) from top 100 differential baits. 
 }
 \usage{
-plotdiffBaits(output, countput, baitmapfile, n = 3, baits = NULL, plotBaitNames = TRUE, plotBaitIDs = TRUE, pcol = "weighted_padj", plevel1 = 5, plevel2 = 3, xlim=c(-1e6,1e6), bgCol = "black", lev1Col = "red", lev2Col = "blue", ...)
+plotDiffBaits(output, countput, baitmapfile, n = 3, baits = NULL, plotBaitNames = TRUE, plotBaitIDs = TRUE, pcol = "weighted_padj", plevel1 = 5, plevel2 = 3, xlim=c(-1e6,1e6), bgCol = "black", lev1Col = "red", lev2Col = "blue", ...)
 }
 
 \arguments{
