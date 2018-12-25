@@ -18,7 +18,7 @@ defaultChicdiffSettings <- function()
     saveAuxData = FALSE,
     parallel = FALSE,
     device = "png",
-    printMemory = TRUE,
+    printMemory = FALSE,
     outprefix = ""    
   )
 }
@@ -276,7 +276,7 @@ readAndFilterPeakMatrix <- function(peakFiles, targetColumns, chicagoData, condi
   x
 }
 
-.printMemoryFunction <- function(printMemory){
+.printMemory <- function(printMemory){
   if(printMemory == TRUE){
     print(gc(reset=TRUE))
   }
@@ -304,14 +304,22 @@ chicdiffPipeline <- function(chicdiff.settings)
   message("\n*** Running getRegionUniverse\n")
   RU <- getRegionUniverse(chicdiff.settings)  
   
+  .printMemory(chicdiff.settings[["printMemory"]])
+  
   message("\n*** Running getControlRegionUniverse\n")
   RUcontrol <- getControlRegionUniverse(chicdiff.settings, RU)
-  
+
+  .printMemory(chicdiff.settings[["printMemory"]])
+    
   message("\n*** Running getFullRegionData\n")
   FullRegionData <- getFullRegionData(chicdiff.settings, RU, RUcontrol, suffix = "")
   
+  .printMemory(chicdiff.settings[["printMemory"]])
+  
   message("\n*** Running DESeq2Wrap for FullRegion\n")
   DESeqOut <- DESeq2Wrap(chicdiff.settings, RU, FullRegionData[[1]])
+  
+  .printMemory(chicdiff.settings[["printMemory"]])
   
   message("\n*** Running DESeq2Wrap for FullControlRegion\n")
   if(chicdiff.settings[["norm"]]=="combined" & 
@@ -323,9 +331,13 @@ chicdiffPipeline <- function(chicdiff.settings)
   DESeqOutControl <- DESeq2Wrap(chicdiff.settings, RUcontrol, FullRegionData[[2]], 
                                 suffix = "Control", theta = attributes(DESeqOut)$theta) 
   
+  .printMemory(chicdiff.settings[["printMemory"]])
+  
   message("\n*** Running IHWcorrection\n")
   output <- IHWcorrection(chicdiff.settings, DESeqOut, FullRegionData[[1]], 
                           DESeqOutControl, FullRegionData[[2]], countput = FullRegionData[[3]]) 
+  
+  .printMemory(chicdiff.settings[["printMemory"]])
   
   print(chicdiff.settings)
   print(sessionInfo())
