@@ -10,7 +10,7 @@ This repository contains the following files:
 
 - The Chicdiff R package     
 - The ChicdiffData R data package with small example Promoter Capture HiC datasets
-- The ChicdiffTools folder currently only contains a wrapper script runChicdiff.R for running Chicdiff from the command line  
+
 Please refer to the Chicdiff R package vignette for more information.
 
 *Installation instructions*
