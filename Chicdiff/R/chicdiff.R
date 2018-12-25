@@ -1487,7 +1487,10 @@ DESeq2Wrap <- function(chicdiff.settings, RU, FullRegionData, suffix = "", theta
   }
 
   norm = chicdiff.settings[["norm"]]
-  
+  if(!norm %in% c("standard", "fullmean", "combined")){
+    stop("DESeq2Wrap error: Unknown normalisation method.")
+  }
+    
   if (!is.null(theta)){
     if(theta == 1 & norm!="standard"){
       warning("Mixing parameter theta set to 1, equivalent to norm = \"standard\". The norm method has been reset accordingly.")
@@ -1544,9 +1547,6 @@ DESeq2Wrap <- function(chicdiff.settings, RU, FullRegionData, suffix = "", theta
   if(norm != "standard"){
     dds.M3 <- copy(dds.nullModel)
   }
-  if(norm =="minvar"){
-    dds.M4 <- copy(dds.nullModel)
-  }
   if(norm == "combined"){
     dds.M5 <- copy(dds.nullModel)
   }
@@ -1586,11 +1586,6 @@ DESeq2Wrap <- function(chicdiff.settings, RU, FullRegionData, suffix = "", theta
     dds.M3 <- nbinomWaldTest(dds.M3)
   }
   
-  if (norm %in% c("minvar", "combined")){
-    nsf = matrix(rep(nullSizeFactors,nrow(normFactorsM3)), 
-                 ncol=nSamples, nrow=nrow(normFactorsM3), byrow=T) 
-  }
-  
   ## model 4) skipped
     
   ##model 5) use a weighted mean of fullMean or DESeq2 scaling factors
@@ -1598,7 +1593,10 @@ DESeq2Wrap <- function(chicdiff.settings, RU, FullRegionData, suffix = "", theta
   ##for the whole sample
   
   if (norm=="combined"){
-  
+    
+    nsf = matrix(rep(nullSizeFactors,nrow(normFactorsM3)), 
+                 ncol=nSamples, nrow=nrow(normFactorsM3), byrow=T) 
+    
     tt = theta
     
     if(is.null(tt)){
@@ -1640,7 +1638,7 @@ DESeq2Wrap <- function(chicdiff.settings, RU, FullRegionData, suffix = "", theta
       }
       
       message("Total deviances by theta (Fullmean --> Standard):")
-      print(deviances)
+      cat(sprintf("%f", deviances), "\n", file=stderr())
       
       tt = Grid[which(deviances==min(deviances)[1])]
       
@@ -1700,6 +1698,7 @@ DESeq2Wrap <- function(chicdiff.settings, RU, FullRegionData, suffix = "", theta
   
   setkey(annoData, regionID)
   stopifnot(identical(1:nrow(annoData), annoData$regionID))
+  
   
   if (norm == "standard" ){
     res = results(dds.nullModel)
@@ -1762,7 +1761,8 @@ DESeq2Wrap <- function(chicdiff.settings, RU, FullRegionData, suffix = "", theta
 
 #-----------------------------IHW and plotting functions-------------------------------#
 
-plotDiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, plotBaitNames = TRUE, 
+plotDiffBaits <- function(output, countput, baitmapfile, baits = NULL, 
+                          n = 3, plotBaitNames = TRUE, 
                           plotBaitIDs = TRUE, pcol="weighted_padj", 
                           plevel1 = 5, plevel2 = 3, xlim=c(-1e6,1e6), bgCol = "black", 
                           lev1Col = "red", lev2Col = "blue", ...){
@@ -2082,8 +2082,8 @@ getCandidateInteractions <- function(output, peakFiles,
   expr = paste0('list( 
                 baitChr = baitChr[1], baitstart = baitstart[1], 
                 baitend = baitend[1], baitName = baitName[1],',
-                paste0(cond1names, "[1]", collapse=","), ',',
-                paste0(cond2names, "[1]", collapse=","), ',',
+                paste0(cond1names, "=", cond1names, "[1]", collapse=","), ',',
+                paste0(cond2names, "=", cond2names, "[1]", collapse=","), ',',
                 ifelse(method=="min", paste0(pcol_out, "=min(", pcol, ")"), 
                               paste0(pcol_out, "=p.hmp(", pcol, ")")),      
                 ', 

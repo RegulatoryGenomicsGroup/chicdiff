@@ -23,27 +23,23 @@ BiocStyle::markdown()
 
 Chicdiff is a method for detecting statistically significant differential interactions in Capture HiC data. This vignette will walk you through a typical Chicdiff analysis. 
 
-A typical Chicdiff job for two biological replicates of CHi-C data takes 30 min wall-clock time and uses 15G RAM. Time and memory usage depends on data sparcity.
-
------- ---------------------------------------------------------
-*NOTE* A wrapper to perform this type of analysis, called *runChicdiff.R*, is provided as part of *chicdiffTools*, which is available from our [Github repository](https://github.com/RegulatoryGenomicsGroup/chicdiff/). Refer to the *chicdiffTools* README for more information.
----------------------------------------------------------------
+A typical Chicdiff job for two biological replicates of CHi-C data in each condition takes ~2-3 hours wall-clock time and uses ~20 Gb RAM. Time and memory usage depend on data sparcity.
 
 The methodology behind Chicdiff is presented in a separate paper that is currently available as a preprint. Briefly, Chicdiff combines moderated differential testing for count data implemented in DESeq2 with CHi-C-specific procedures for signal normalisation and p-value weighting. To increase power, Chicdiff combines reads across several fragments surrounding each significantly interacting region for each bait. Background estimates from CHiCAGO are used to construct a custom scaling matrix that is used in differential testing. The count and scaling matrices are provided as input for the DESeq2 package that tests each interaction for differences between conditions using a negative binomial model with moderated dispersion estimation. DESeq2 implements both pairwise testing between conditions, as well as likelihood ratio tests for multi-condition differences. The p-values from either of these tests are then submitted to the weighting procedure as described below. 
 
 Due to strong distance-dependent variation of signal-to-noise ratios and effect sizes in CHi-C data, Chicdiff performs non-uniform multiple testing correction, such that weaker signals at longer distances are corrected more vigorously. We use IHW to learn the weights on the p-values obtained from a differential testing of fragment pairs in a 'training set' that is sampled from the full count data for each sample. We use interaction distance bins as covariates to assign weights to each distance bin in a manner that maximises the overall fraction of rejected null hypotheses. The distance-dependent weights learned this way are applied to the p-values in the test set, and the resulting weighted p-values are reported to the user.
 
---------- ------------------------------------------------------
-*WARNING* The data set used in this tutorial comes from the package *ChicdiffData*. This package contains small parts (chromosome 19) of published Promoter Capture HiC data sets in human Naive CD4+ T cells and Monocytes [@Javierre2016] - note that we are only reusing raw data from this publication. Do not use any of these sample input data for purposes other than training. 
-
----------------------------------------------------------------
-
-In this vignette, we use the Naive CD4+ T cells and Monocytes data [@Javierre2016]:
+In this vignette, we use a small subset of the Capture Hi-C data for Naive CD4+ T cells and Monocytes data from Javierre et al. (Cell 2016) provided in package *ChicdiffData*:
 
 ```{r, message=FALSE}
 library(Chicdiff)
 library(ChicdiffData)
 ```
+
+--------- ------------------------------------------------------
+*WARNING* The dataset in *ChicdiffData* package contains only the results for chromosome 19.
+
+---------------------------------------------------------------
 
 
 # Workflow
@@ -66,7 +62,7 @@ dir(testDesignDir)
 ```
 
 ------ ---------------------------------------------------------
-*NOTE* These are same files that were used to run CHiCAGO.
+*NOTE* These are same design files that were used to run CHiCAGO.
 
 ---------------------------------------------------------------
 
@@ -106,7 +102,11 @@ countData <- list(
 ------ --------------------------------------------------------
 *NOTE* The names of every file should match the column name of the correpsonding data set in the *peakfile* 
 
-*IMPORANT* If Peakfile(s) were generated at the sample level (as opposed to per replicate), the elements in each of the vectors should not be named.  
+--------------------------------------------------------------
+
+
+----------- ---------------------------------------------------------
+*IMPORTANT* If Peakfile(s) were generated at the sample level (as opposed to per replicate), the elements in each of the vectors should not be named.  
 
 ---------------------------------------------------------------
 
@@ -135,8 +135,10 @@ chicagoData <- list(
 
 ------ --------------------------------------------------------
 *NOTE* As for *countData*, the names of every file should match the column name of the correpsonding data set in the *peakfile* file.
+---------------------------------------------------------------
 
-*IMPORANT* If Peakfile(s) were generated at the sample level (as opposed to per replicate), the elements in each of the vectors should not be named.  
+----------- ----------------------------------------------------
+*IMPORTANT* If Peakfile(s) were generated at the sample level (as opposed to per replicate), the elements in each of the vectors should not be named.  
 
 ---------------------------------------------------------------
 
@@ -225,16 +227,14 @@ We see that the general trend is driven by distance (stratum). As expected, the 
 
 The ```plotdiffBaits()``` function can be used to plot the raw read counts versus linear distance from bait, mirrored for compared conditions. Significant Interactions are represented as intervals, labelled in a different colour, according to the attributed weighted pvalue.
 
+By default Chicdiff produces a plot showing four random baits from the top 100 baits, containing interactions with the lowest weighted pvalue. Interactions within 1 Mb from bait are shown, with those passing the threshold of 5 colored in red and those passing the more lenient threshold of 3 shown in blue. Those interactions that are passing the threshold of 5 go through the Chicdiff pipeline. To gain the statistical power the otherEnd under evaluation will be expanded to an interval, which will be compared between conditions. Thus the weighted pvalue correpsonds not to an individual interaction but to an interaction of bait with an interval and is the result of several interactions withing that interval.
+
 ```{r}
 IHWweightPlot <- png::readPNG(file.path(resultsPath,"diffbaitPlot.png"))
 grid::grid.raster(IHWweightPlot)
 ```
 
-By default Chicdiff produces a plot showing four random baits from the top 100 baits, containing interactions with the lowest weighted pvalue. Interactions within 1 Mb from bait are shown, with those passing the threshold of 5 colored in red and those passing the more lenient threshold of 3 shown in blue. Those interactions that are passing the threshold of 5 go through the Chicdiff pipeline. To gain the statistical power the otherEnd under evaluation will be expanded to an interval, which will be compared between conditions. Thus the weighted pvalue correpsonds not to an individual interaction but to an interaction of bait with an interval and is the result of several interactions withing that interval.
-
-Using the final Chicdiff output file, countput and the baitmap as inputs to ```plotDiffBaits()``` function the user can modify the number of baits to display or provide a set of defind baits to plot, as well as change the display parameters, such as color of interactions, the distance around the bait to display and others (see documentation for ```plotDiffBaits```).
-
-Since Chicdiff will normally be run in batch mode, while interactions of interest plotted after examining the results, in the example below we will start from the Rds objects saved during the Chicdiff run: 
+To plot the profiles of specific baits of interest using ```plotDiffBaits()```, it needs to be provided with the output data table (saved in *results.Rds* by ```chicdiffPipeline```), count table (saved in *countput.Rds*), baitmap file (from *CHiCAGO* design directory) and a vector of baitIDs of interest (see ```?plotDiffBaits``` for the description of additional parameters).
 
 ```{r}
 
