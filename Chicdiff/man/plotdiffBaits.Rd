@@ -16,7 +16,7 @@ plotDiffBaits(output, countput, baitmapfile, n = 3, baits = NULL, plotBaitNames 
   
   \item{countput}{countput file, containing counts recovered from the .Rda Chicago files, produced in  \code{\link{getFullRegionData1}} or \code{\link{getFullRegionData2}}.}
 
-  \item{baitmapfile}{The location of the bait map file. Recovered from defchic.settings, produced by  \code{\link{setChicExperiment}}.}
+  \item{baitmapfile}{The location of the bait map file. Recovered from defchic.settings, produced by  \code{\link{setChicdiffExperiment}}.}
 
   \item{n}{The number of baits to plot (ignored if \code{baits} is specified). The differential landscape of n random unique baits will be displayed.}
 
@@ -53,7 +53,7 @@ Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 
 \seealso{
-  \code{\link{setChicExperiment}}, \code{\link{getFullRegionData1}}, \code{\link{getFullRegionData2}}, \code{\link{IHWcorrection}}
+  \code{\link{setChicdiffExperiment}}, \code{\link{chicdiffPipelne}}, \code{\link{getFullRegionData1}}, \code{\link{getFullRegionData2}}, \code{\link{IHWcorrection}}
 }
 
 \examples{

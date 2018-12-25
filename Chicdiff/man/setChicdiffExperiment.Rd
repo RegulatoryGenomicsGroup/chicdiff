@@ -7,7 +7,7 @@ Set experiment
 Creates the full set of settings for Chicdiff
 }
 \usage{
-setChicdifExperiment(designDir="", chicagoData = NA, countData = NA, peakfiles = NA, outprefix="", targetColumns = NA, settings=list(), settingsFile=NULL, inputfiles = NA, defchic.settings=defaultchicSettings())
+setChicdifExperiment(designDir="", chicagoData = NA, countData = NA, peakfiles = NA, outprefix="", targetColumns = NA, settings=list(), settingsFile=NULL, inputfiles = NA, chicdiff.settings=defaultChicdiffSettings())
 }
 
 \arguments{
@@ -55,7 +55,7 @@ A list updated settings for a chicdiff experiment
   Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 \seealso{
-  \code{\link{defaultchicSettings}}
+  \code{\link{defaultChicdiffSettings}}, \code{\link{chicdiffPipeline}}
 }
 \examples{
 

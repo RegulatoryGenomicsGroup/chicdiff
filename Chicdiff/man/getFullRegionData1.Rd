@@ -12,7 +12,7 @@ getFullRegionData1(defchic.settings, RU, is_control = FALSE, suffix = "")
 }
 
 \arguments{
-  \item{defchic.settings}{settings that were set up by running \code{\link{setChicExperiment}}}
+  \item{defchic.settings}{settings that were set up by running \code{\link{setChicdiffExperiment}}}
   \item{RU}{Region Universe set up by running \code{\link{getRegionUniverse}} or Control Region Universe set by by running \code{\link{getControlRegionUniverse}}}
   \item{is_control}{is the data provided - RU or RU control? FALSE if RU = RU, TRUE if RU = RUcontrol}
   \item{suffix}{Optional: suffix to add to the name of the saved files}
@@ -29,7 +29,7 @@ Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 
 \seealso{
-  \code{\link{setChicExperiment}}, \code{\link{getRegionUniverse}}, \code{\link{getControlRegionUniverse}}
+  \code{\link{setChicdiffExperiment}}, \code{\link{getRegionUniverse}}, \code{\link{getControlRegionUniverse}}
 }
 \examples{
 

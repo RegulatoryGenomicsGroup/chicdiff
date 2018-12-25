@@ -12,7 +12,7 @@ DESeq2Wrap(defchic.settings, RU, FullRegionData, suffix = "")
 }
 
 \arguments{
-  \item{defchic.settings}{settings that were set up by running \code{\link{setchicExperiment}}}
+  \item{defchic.settings}{settings that were set up by running \code{\link{setChicdiffExperiment}}}
   \item{RU}{Region Universe set up by running \code{\link{getRegionUniverse}} or Control Region Universe set by by running \code{\link{getControlRegionUniverse}}}
   \item{FullRegionData}{If running for RU -> FullRegionData[[1]] - Full Region Data for RU. If running for RUcontrol - use FullRegionData[[2]] - Full Region Data for RU control}
   \item{suffix}{Optional: suffix to add to the name of the saved files}
@@ -31,7 +31,7 @@ Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 
 \seealso{
-  \code{\link{setChicExperiment}}, \code{\link{getRegionUniverse}}, \code{\link{getControlRegionUniverse}}, \code{\link{getFullRegionData1}}, \code{\link{getFullRegionData2}}}
+  \code{\link{setChicdiffExperiment}}, \code{\link{getRegionUniverse}}, \code{\link{getControlRegionUniverse}}, \code{\link{getFullRegionData1}}, \code{\link{getFullRegionData2}}}
   
 \examples{
 # path to recover test data

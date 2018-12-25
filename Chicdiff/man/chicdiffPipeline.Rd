@@ -28,7 +28,7 @@ In addition, it saves the following data into files:
   \item{<outprefix>_IHWdecisionBoundaryPlot.png}{IHW Boundary decision plot, produced on the control data.}
   \item{<outprefix>_IHWweightPlot.png}{IHW weight plot, produced on the control data.}
 
-Otherwise, if the saveAuxData setting in setchicExperiment was set to TRUE, Chicdiff returns 4 more objects:
+Otherwise, if the saveAuxData setting in setChicdiffExperiment was set to TRUE, Chicdiff returns 4 more objects:
   \item{<outprefix>_RegionUniverse.Rds}{Contains contact - region annotations}
   \item{<outprefix>_ControlRegionUniverse.Rds}{Contains control contact - region annotations}
   \item{<outprefix>_FullRegionData.Rds}{Contains technical Chicago info on contact - region annotations}
@@ -45,7 +45,7 @@ This pipeline runs the following functions in order:
 
 - \code{\link{getRegionUniverse}}
 
-- \code{\link{getControlRegionUniverse3}}
+- \code{\link{getControlRegionUniverse}}
 
 - \code{\link{getFullRegionData}} 
 
@@ -55,7 +55,7 @@ This pipeline runs the following functions in order:
 
 }
 \seealso{
-  \code{\link{setChicExperiment}}
+  \code{\link{setChicdiffExperiment}},   \code{\link{plotDiffBaits}},   \code{\link{getCandidateInteractions}}
 }
 
 \examples{

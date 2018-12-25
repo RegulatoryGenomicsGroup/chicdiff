@@ -32,7 +32,7 @@
   Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 \seealso{
-  \code{\link{setChicExperiment}}, \code{\link{.updateChicSettings}}
+  \code{\link{setChicdiffExperiment}}
 }
 \examples{
 DefChicSettings <- defaultChicdiffSettings()

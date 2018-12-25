@@ -1,7 +1,7 @@
 ---
 title: "Chicdiff Vignette"
 author: "Jonathan Cairns, William Orchard, Valeriya Malysheva, Mikhail Spivakov"
-date: 15 November, 2018
+date: 29 December, 2018
 VignetteIndexEntry: 
 output:
   BiocStyle::html_document:
@@ -11,7 +11,7 @@ output:
 <!--
 %\VignetteEngine{knitr::rmarkdown}
 %\VignetteIndexEntry{Chicdiff Vignette}
-%\VignetteDepends{}
+%\VignetteDepends{ChicdiffData, DESeq2, IHW, cowplot}
 %\VignetteKeywords{Chicdiff}
 %\VignettePackage{Chicdiff}
 -->
@@ -27,11 +27,9 @@ A typical Chicdiff job for two biological replicates of CHi-C data takes 30 min 
 
 ------ ---------------------------------------------------------
 *NOTE* A wrapper to perform this type of analysis, called *runChicdiff.R*, is provided as part of *chicdiffTools*, which is available from our [Github repository](https://github.com/RegulatoryGenomicsGroup/chicdiff/). Refer to the *chicdiffTools* README for more information.
-
-
 ---------------------------------------------------------------
 
-The methodology behind Chicdiff is presented in a separate paper that is currently available as a preprint [ref!!!]. Briefly, Chicdiff combines moderated differential testing for count data implemented in DESeq2 with CHi-C-specific procedures for signal normalisation and p-value weighting. To increase power, Chicdiff combines reads across several fragments surrounding each significantly interacting region for each bait. Background estimates from CHiCAGO are used to construct a custom scaling matrix that is used in differential testing. The count and scaling matrices are provided as input for the DESeq2 package that tests each interaction for differences between conditions using a negative binomial model with moderated dispersion estimation. DESeq2 implements both pairwise testing between conditions, as well as likelihood ratio tests for multi-condition differences. The p-values from either of these tests are then submitted to the weighting procedure as described below. 
+The methodology behind Chicdiff is presented in a separate paper that is currently available as a preprint. Briefly, Chicdiff combines moderated differential testing for count data implemented in DESeq2 with CHi-C-specific procedures for signal normalisation and p-value weighting. To increase power, Chicdiff combines reads across several fragments surrounding each significantly interacting region for each bait. Background estimates from CHiCAGO are used to construct a custom scaling matrix that is used in differential testing. The count and scaling matrices are provided as input for the DESeq2 package that tests each interaction for differences between conditions using a negative binomial model with moderated dispersion estimation. DESeq2 implements both pairwise testing between conditions, as well as likelihood ratio tests for multi-condition differences. The p-values from either of these tests are then submitted to the weighting procedure as described below. 
 
 Due to strong distance-dependent variation of signal-to-noise ratios and effect sizes in CHi-C data, Chicdiff performs non-uniform multiple testing correction, such that weaker signals at longer distances are corrected more vigorously. We use IHW to learn the weights on the p-values obtained from a differential testing of fragment pairs in a 'training set' that is sampled from the full count data for each sample. We use interaction distance bins as covariates to assign weights to each distance bin in a manner that maximises the overall fraction of rejected null hypotheses. The distance-dependent weights learned this way are applied to the p-values in the test set, and the resulting weighted p-values are reported to the user.
 
@@ -148,7 +146,7 @@ We run Chicdiff on the test data as follows.
 First, we set up chicdiff experiment settings with ``setChicdiffExperiment()``:
 
 
-```{r, message=FALSE, warning = FALSE}
+```{r, message=FALSE, warning=FALSE}
 chicdiff.settings <- setChicdiffExperiment(designDir = testDesignDir, chicagoData = chicagoData, countData = countData, peakfiles = peakFiles, outprefix="")
 ```
 
@@ -156,13 +154,13 @@ Note that in addition to returning the settings list, the function will save it 
 
 OPTIONAL: You can modify settings directly in the command line (see ```?defaultChicdiffSettings```). For example, we can switch the running mode to parallel (which speeds up the runtime, but increases the memory requirements):
 
-```{r, message=FALSE, warning = FALSE}
+```{r, eval=FALSE}
 chicdiff.settings <- setChicdiffExperiment(designDir = testDesignDir, chicagoData = chicagoData, countData = countData, peakfiles = peakFiles, outprefix="", settings = list(parallel=TRUE))
 ```
 
 Alternatively, you can provide your prefered parameters in a *settingsFile*:
 
-```{r, message=FALSE, warning = FALSE}
+```{r, eval=FALSE}
 settingsFile = file.path(dataPath,"SettingsFile.txt")
 chicdiff.settings <- setChicdiffExperiment(designDir = testDesignDir, chicagoData = chicagoData, countData = countData, peakfiles = peakFiles, outprefix="", settingsFile = settingsFile)
 ```
@@ -174,8 +172,13 @@ chicdiff.settings <- setChicdiffExperiment(designDir = testDesignDir, chicagoDat
 
 Finally, we run the pipeline with ``chicdiffPipeline()``:
 
-```{r, echo=FALSE}
+```{r, eval=FALSE}
 output <- chicdiffPipeline(chicdiff.settings)
+```
+
+```{r, echo=FALSE}
+resultsPath <- file.path(dataPath, "CD4_Mono_results")
+output <- readRDS(file.path(resultsPath, "results.Rds"))
 ```
 
 The pipeline will define extended regions based on the ```RUextend``` option (by default, 5 fragments each way from each interaction peak at the other end of the bated interactions), tune the scaling factor based on minimising the total variance between replicates and conditions, normalise the data and submit them for differential testing by DESeq2. It will then perform the same procedures for randomly sampled 'control' interactions to estimate the p-value weighting function, and apply the weights to the p-values in the test set.
@@ -183,7 +186,9 @@ The pipeline will define extended regions based on the ```RUextend``` option (by
 For each bait-region interaction, the output data table lists the log2FoldChange of normalised interaction read counts, along with raw, weighted, and weighted adjusted p-values (```pvalue```, ```weighted_pvalue``` and ```weighted_padj```, respectively).
 
 ```{r}
+
 head(output)
+
 ```
 
 In addition to returning the final dataset, ```chicdiffPipeline``` will save it as an Rds file <outprefix>_results.Rds. In addition, ```chicdiffPipeline``` will save the final count table along with Chicago parameter estimates in the Rds file *<outprefix>_countput.Rds*. Further output files can be generated with the setting ```saveAuxFiles=TRUE``` - see function documentation for details.
@@ -231,13 +236,15 @@ Using the final Chicdiff output file, countput and the baitmap as inputs to ```p
 
 Since Chicdiff will normally be run in batch mode, while interactions of interest plotted after examining the results, in the example below we will start from the Rds objects saved during the Chicdiff run: 
 
-```{r, warning=FALSE}
-results <- readRDS(file.path(resultsPath, "results.Rds"))
+```{r}
+
+output <- readRDS(file.path(resultsPath, "results.Rds"))
 countput <- readRDS(file.path(resultsPath, "countput.Rds"))
 bmap <- fread(file.path(testDesignDir, "chr19_GRCh37_HindIII.baitmap"))
 
 baits <- c(327182, 330614,330598, 327700)
-plotDiffBaits(results, countput, bmap, baits)
+plotDiffBaits(output, countput, bmap, baits)
+
 ```
 
 # Prioritising individual fragments within differentially interacting regions  
@@ -249,7 +256,6 @@ To obtain indications of differential signals at individual fragments, Chicdiff 
 In order to prioritise putative 'driver' interactions within the differentially interacting regions, ```getCandidateInteractions``` enables filtering them by minimum |asinh (Chicago score)| (```deltaAsinhScore```) between conditions. The asinh transformation helps compress the upper range of the scores, where the differences are less interpretable tn   
 
 ```{r}
-
 outCI <- getCandidateInteractions(chicdiff.settings = chicdiff.settings, 
                     output = output, peakFiles = peakFiles, 
                     pvcut = 0.05, deltaAsinhScore = 1)
