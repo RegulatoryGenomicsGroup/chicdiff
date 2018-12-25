@@ -6,11 +6,11 @@ Chicdiff takes advantage of Capture Hi-C parameters learned by the Chicago pipel
 
 A preprint describing Chicdiff will be released very shortly.
 
-This repository contains the following files:
+This repository contains the following folders:
 
 - The Chicdiff R package     
-- The ChicdiffData R data package with small example Promoter Capture HiC datasets
-- The ChicdiffTools folder currently only contains a wrapper script runChicdiff.R for running Chicdiff from the command line  
+- The ChicdiffData R data package with example Promoter Capture Hi-C datasets
+
 Please refer to the Chicdiff R package vignette for more information.
 
 *Installation instructions*
