@@ -21,15 +21,13 @@ BiocStyle::markdown()
 
 # Introduction
 
-Chicdiff is a method for detecting statistically significant differential interactions in Capture HiC data. This vignette will walk you through a typical Chicdiff analysis. 
-
-A typical Chicdiff job for two biological replicates of CHi-C data in each condition takes ~2-3 hours wall-clock time and uses ~20 Gb RAM. Time and memory usage depend on data sparcity.
+Chicdiff is a method for detecting statistically significant differential interactions in Capture Hi-C data. This vignette will walk you through a typical Chicdiff analysis. 
 
 The methodology behind Chicdiff will be presented in a separate paper. Briefly, Chicdiff combines moderated differential testing for count data implemented in DESeq2 with CHi-C-specific procedures for signal normalisation and p-value weighting. To increase power, Chicdiff combines reads across several fragments surrounding each significantly interacting region for each bait. Background estimates from Chicago are used to construct a custom scaling matrix that is used in differential testing. The count and scaling matrices are provided as input for the DESeq2 package that tests each interaction for differences between conditions using a negative binomial model with moderated dispersion estimation. DESeq2 implements both pairwise testing between conditions, as well as likelihood ratio tests for multi-condition differences. The p-values from either of these tests are then submitted to the weighting procedure as described below. 
 
 Due to strong distance-dependent variation of signal-to-noise ratios and effect sizes in CHi-C data, Chicdiff performs non-uniform multiple testing correction, such that weaker signals at longer distances are corrected more vigorously. We use IHW to learn the weights on the p-values obtained from a differential testing of fragment pairs in a 'training set' that is sampled from the full count data for each sample. We use interaction distance bins as covariates to assign weights to each distance bin in a manner that maximises the overall fraction of rejected null hypotheses. The distance-dependent weights learned this way are applied to the p-values in the test set, and the resulting weighted p-values are reported to the user.
 
-In this vignette, we use a small subset of the Capture Hi-C data for Naive CD4+ T cells and Monocytes data from Javierre et al. (Cell 2016) provided in package *ChicdiffData*:
+In this vignette, we use a small subset of the Capture Hi-C data for naive CD4+ T cells and Monocytes data from Javierre et al. (Cell 2016) provided in package *ChicdiffData*:
 
 ```{r, message=FALSE}
 library(Chicdiff)
@@ -37,10 +35,11 @@ library(ChicdiffData)
 ```
 
 --------- ------------------------------------------------------
-*WARNING* The dataset in *ChicdiffData* package contains only the results for chromosome 19.
+*WARNING* The dataset in *ChicdiffData* package contains only data for chromosome 19 from two replicates of monocytes and naive CD4+ T cells (compared with three and four replicates, respectively, released in the paper).
 
 ---------------------------------------------------------------
 
+The example dataset from *ChicdiffData* uses ~0.6 Gb RAM and takes minutes to process on a standard laptop machine. A typical job for two biological replicates of genome-wide CHi-C data in each condition takes ~30-60 min and uses ~10-15 Gb RAM. Dense datasets with more replicates will take even longer to process and use more RAM. 
 
 # Workflow
 
@@ -53,7 +52,7 @@ Before you start, you will need:
 - Restriction map file (.rmap) - a bed file containing coordinates of the restriction fragments. By default, 4 columns: chr, start, end, fragmentID.
 - Bait map file (.baitmap) - a bed file containing coordinates of the baited restriction fragments, and their associated annotations. By default, 5 columns: chr, start, end, fragmentID, baitAnnotation. The regions specified in this file, including their fragmentIDs, must be an exact subset of those in the .rmap file. The baitAnnotation is a text field that is used only to annotate the output and plots.
 
-We recommend that you put all five of these files into the same directory (that we refer to as designDir). An example of a valid design folder, for a sample of the CD4+ and Monocytes data used in this vignette, is provided in the ChicdiffData package, as follows.
+We recommend that you put all five of these files into the same directory (that we refer to as designDir). An example of a valid design folder, for a sample of the CD4+ and Monocytes data used in this vignette, is provided in the ChicdiffData package, and can be accessed follows.
 
 ```{r}
 dataPath <- system.file("extdata", package="ChicdiffData")
@@ -62,11 +61,11 @@ dir(testDesignDir)
 ```
 
 ------ ---------------------------------------------------------
-*NOTE* These are same design files that were used to run Chicago.
+*NOTE* These are same design files that are used to run Chicago.
 
 ---------------------------------------------------------------
 
-2. One or more *Peakfile(s)* defining interactions of interest. Typically this file is generated by ```chicagoTools/makePeakMatrix.R``` based on the Chicago runs on either individual replicates or merged replicates for each condition. The sample IDs from the *peakfiles* will be used as primary identifiers for all other types of input files (see below). If multiple *peakfiles* are given, they will be merged by Chicdiff. 
+2. One or more *peakfile(s)* defining interactions of interest. Typically *peakfile(s)* are generated by ``chicagoTools/makePeakMatrix.R`` from the results of Chicago runs on either individual replicates or merged replicates for each condition. The sample IDs from the *peakfiles* will be used as primary identifiers for all other types of input files (see below). If multiple *peakfiles* are given, they will be merged by Chicdiff. 
 
 An example *peakfile* (replicate-level) is provided in the ChicdiffData package:
 
@@ -74,7 +73,7 @@ An example *peakfile* (replicate-level) is provided in the ChicdiffData package:
 peakFiles <- file.path(dataPath,"peakMatrix_cd4_mono_unmerged.txt")
 ```
 
-3. Count data files in Chicago input format, *.chinput*. You can obtain *.chinput* files from aligned Capture Hi-C BAM files by running ``bam2chicago.sh``, available as part of ``chicagoTools``. (To obtain BAM files from raw fastq files, use a Hi-C alignment & QC pipeline such as [HiCUP](http://www.bioinformatics.babraham.ac.uk/projects/hicup/).
+3. Count data files in Chicago input format, *.chinput*. You can obtain *.chinput* files from aligned Capture Hi-C BAM files by running ``chicagoTools/bam2chicago.sh``. (To obtain BAM files from raw fastq files, you will need to use a Hi-C alignment & QC pipeline such as [HiCUP](http://www.bioinformatics.babraham.ac.uk/projects/hicup/).
 
 Example *.chinput* files are provided in the ChicdiffData package, as follows:
 
@@ -192,7 +191,7 @@ head(output)
 
 ```
 
-In addition to returning the final dataset, ```chicdiffPipeline``` will save it as an Rds file <outprefix>_results.Rds. In addition, ```chicdiffPipeline``` will save the final count table along with Chicago parameter estimates in the Rds file *<outprefix>_countput.Rds*. Further output files can be generated with the setting ```saveAuxFiles=TRUE``` - see function documentation for details.
+```chicdiffPipeline``` will return the final dataset, as well as save it as an Rds file <outprefix>_results.Rds. In addition, it will save the final count table along with Chicago parameter estimates in the Rds file *<outprefix>_countput.Rds*. Further output files can be generated with the setting ```saveAuxFiles=TRUE``` - see the ```?chicdiffpipeline``` for details.
 
 
 ## Output diagnostic plots 
