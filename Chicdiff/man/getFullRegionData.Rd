@@ -14,7 +14,7 @@ getFullRegionData(defchic.settings, RU, RUcontrol, suffix = "")
 }
 
 \arguments{
-  \item{defchic.settings}{settings that were set up by running \code{\link{setChicExperiment}}}
+  \item{defchic.settings}{settings that were set up by running \code{\link{setChicdiffExperiment}}}
   \item{RU}{Region Universe set up by running \code{\link{getRegionUniverse}}}
   \item{RUcontrol}{Control Region Universe set up by running \code{\link{getControlRegionUniverse}}}
   \item{suffix}{Control Region Universe set up by running \code{\link{getControlRegionUniverse}}}
@@ -33,7 +33,7 @@ Jonathan Cairns, Willia Orchard, Valeriya Malysheva and Mikhail Spivakov
 
 
 \seealso{
-  \code{\link{setChicExperiment}}, \code{\link{getRegionUniverse}}, \code{\link{getControlRegionUniverse}}
+  \code{\link{setChicdiffExperiment}}, \code{\link{getRegionUniverse}}, \code{\link{getControlRegionUniverse}}
 }
 
 \examples{

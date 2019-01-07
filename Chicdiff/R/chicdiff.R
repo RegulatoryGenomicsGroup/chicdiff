@@ -1,44 +1,55 @@
 ## Settings functions -----------------
 
-defaultchicSettings <- function()
+defaultChicdiffSettings <- function()
 {
   list(
     inputfiles= NA,
     peakfiles= NA,
-    targetRDSorRDAs= NA,
-    targetChs= NA,
+    chicagoData= NA,
+    countData= NA,
     rmapfile= NA,
     targetColumns= NA,
     baitmapfile= NA,
     RUexpand= 5L, 
     score= 5,
-    saveRDS = FALSE,
+    norm="combined", 
+    theta = NULL,
+    theta_grid = seq(0,1,0.25),
+    saveAuxData = FALSE,
     parallel = FALSE,
     device = "png",
-    printMemory = TRUE
+    printMemory = FALSE,
+    outprefix = ""    
   )
 }
 
 ### This is where we now set the defaults
 ### Order of priority:
 ### settings override settings from settingsFile
-### both override defchic.settings
+### both override chicdiff.settings
 
-setChicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA, peakfiles = NA, settings=list(), settingsFile=NULL, inputfiles = NA,
-                             defchic.settings=defaultchicSettings())
+setChicdiffExperiment = function(designDir="", chicagoData = NA, countData = NA, peakfiles = NA, 
+                                 outprefix = "", settings=list(), settingsFile=NULL, inputfiles = NA,
+                                 chicdiff.settings=defaultChicdiffSettings())
 {
   
-  if(designDir == "" & identical(settings, list()) & is.null(settingsFile) & identical(defchic.settings, defaultchicSettings()))
+  if(designDir == "" & identical(settings, list()) & is.null(settingsFile) & identical(chicdiff.settings, defaultChicdiffSettings()))
   {
     stop("Design not specified. Please specify a design directory or design files.")
   }
-  defchic.settings = .updateChicSettings(designDir, targetRDSorRDAs, targetChs, peakfiles, 
-                                         settings, settingsFile, inputfiles, defchic.settings)
+  chicdiff.settings = .updateChicdiffSettings(designDir, chicagoData, countData, peakfiles, outprefix,
+                                         settings, settingsFile, inputfiles, chicdiff.settings)
   
-}
 
-.updateChicSettings = function(designDir, targetRDSorRDAs, targetChs, peakfiles, 
-                               settings, settingsFile, inputfiles, defchic.settings, updateDesign=FALSE){
+  saveRDS(chicdiff.settings, paste0(chicdiff.settings[["outprefix"]], "_settings.Rds"))
+  
+  chicdiff.settings
+
+  }
+
+.updateChicdiffSettings = function(designDir, chicagoData, countData, peakfiles, outprefix,
+                               settings, settingsFile, inputfiles, chicdiff.settings, 
+                               updateDesign=FALSE){
   modSettings = vector("list")
   
   if(!is.null(settingsFile)){
@@ -70,26 +81,27 @@ setChicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
   }
   
   for (s in names(modSettings)){
-    defchic.settings[[s]] = modSettings[[s]]
+    chicdiff.settings[[s]] = modSettings[[s]]
   }
   
-  defchic.settings[["targetRDSorRDAs"]] = targetRDSorRDAs
-  defchic.settings[["targetChs"]] = targetChs
+  chicdiff.settings[["outprefix"]] = outprefix
+  chicdiff.settings[["chicagoData"]] = chicagoData
+  chicdiff.settings[["countData"]] = countData
   
-  if(any(is.na(targetRDSorRDAs)) | any(is.na(targetChs))){
-    if(is.na(defchic.settings[["inputfiles"]])){
-      defchic.settings[["inputfiles"]] = inputfiles
+  if(any(is.na(chicagoData)) | any(is.na(countData))){
+    if(is.na(chicdiff.settings[["inputfiles"]])){
+      chicdiff.settings[["inputfiles"]] = inputfiles
     }else{
-      if (!file.exists(defchic.settings[["inputfiles"]])){
-        stop(paste("No config file found at the specified location", defchic.settings[["inputfiles"]]))
+      if (!file.exists(chicdiff.settings[["inputfiles"]])){
+        stop(paste("No config file found at the specified location", chicdiff.settings[["inputfiles"]]))
       }
     }
   } else{
-    if(!(all.equal(names(targetRDSorRDAs), names(targetChs)))){
+    if(!(all.equal(names(chicagoData), names(countData)))){
       stop("Conditions for the RDS/RDA files and chinputs must be the same")
     }
-    temp <- unlist(targetRDSorRDAs)
-    temp_2 <- unlist(targetChs)
+    temp <- unlist(chicagoData)
+    temp_2 <- unlist(countData)
     if(!(length(temp) == length(temp_2))){
       stop("Must provide the same number of RDS/RDA files as chinputs")
     }
@@ -97,49 +109,54 @@ setChicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
   
   if(!is.na(inputfiles)){
     input_lists <- .makeTargetFilesList(inputfiles)
-    targetRDSorRDAs <- input_lists[[1]]
-    targetChs <- input_lists[[2]]
+    chicagoData <- input_lists[[1]]
+    countData <- input_lists[[2]]
   }
   
-  defchic.settings[["peakfiles"]] = peakfiles
+  chicdiff.settings[["peakfiles"]] = peakfiles
   
-  if(is.na(defchic.settings[["peakfiles"]])){
+  if(is.na(chicdiff.settings[["peakfiles"]])){
     stop("No peak files provided")
-  } else if(!file.exists(defchic.settings[["peakfiles"]])){
-    stop(paste("No peak files found at the specified location", defchic.settings[["peakfiles"]]))
+  } else if(!file.exists(chicdiff.settings[["peakfiles"]])){
+    stop(paste("No peak files found at the specified location", chicdiff.settings[["peakfiles"]]))
   }
   
-  targetColumns <- .getTargetColumns(targetRDSorRDAs)
-  defchic.settings[["targetColumns"]] = targetColumns
-  peakfile_columns <- colnames(.multimerge(peakfiles))
+  targetColumns <- .getTargetColumns(chicagoData)
+  chicdiff.settings[["targetColumns"]] = targetColumns
   
-  if(!all(targetColumns %in% peakfile_columns)){
-    stop("All specified columns must be present in the peak files")  
-  }
+  # peakfile_columns <- colnames(.multimerge(peakfiles))
   
-  if(is.na(defchic.settings[["baitmapfile"]]) | (updateDesign & !is.null(designDir))){
-    defchic.settings[["baitmapfile"]] = .locateFile("<baitmapfile>.baitmap", designDir, "\\.baitmap$")
+  #if(!all(targetColumns %in% peakfile_columns)){
+  #  stop("All specified columns must be present in the peak files")  
+  #}
+  
+  if(is.na(chicdiff.settings[["baitmapfile"]]) | (updateDesign & !is.null(designDir))){
+    chicdiff.settings[["baitmapfile"]] = .locateFile("<baitmapfile>.baitmap", designDir, "\\.baitmap$")
   }else{
-    if (!file.exists(defchic.settings[["baitmapfile"]])){
-      stop(paste("No baitmap file found at the specified location", defchic.settings[["baitmapfile"]]))
+    if (!file.exists(chicdiff.settings[["baitmapfile"]])){
+      stop(paste("No baitmap file found at the specified location", chicdiff.settings[["baitmapfile"]]))
     }
   }
   
-  if(is.na(defchic.settings[["rmapfile"]]) | (updateDesign & !is.null(designDir))){
-    defchic.settings[["rmapfile"]] = .locateFile("<rmapfile>.rmap", designDir, "\\.rmap$")
+  if(is.na(chicdiff.settings[["rmapfile"]]) | (updateDesign & !is.null(designDir))){
+    chicdiff.settings[["rmapfile"]] = .locateFile("<rmapfile>.rmap", designDir, "\\.rmap$")
   }else{
-    if (!file.exists(defchic.settings[["rmapfile"]])){
-      stop(paste("No rmap file found at the specified location", defchic.settings[["rmapfile"]]))
+    if (!file.exists(chicdiff.settings[["rmapfile"]])){
+      stop(paste("No rmap file found at the specified location", chicdiff.settings[["rmapfile"]]))
     }
   }
   
-  
+  chicdiff.settings[["norm"]] = tolower(chicdiff.settings[["norm"]])
+  if (length(chicdiff.settings[["norm"]])>1){ stop ("Parameter error: Only one normalisation method can be specified at a time") }
+  if (!chicdiff.settings[["norm"]] %in% c("standard", "fullmean", "combined")){
+    stop ("Parameter error: normalisation method should be one of 'standard', 'fullmean', 'combined'")
+  }  
   
   message("Checking the design files...")
   
-  baitmapfile = Chicago:::.readBaitmap(defchic.settings)
+  baitmapfile = Chicago:::.readBaitmap(chicdiff.settings)
   
-  rmapfile = Chicago:::.readRmap(defchic.settings)
+  rmapfile = Chicago:::.readRmap(chicdiff.settings)
   if (ncol(rmapfile)<4){
     stop("There are fewer columns in the rmap file than expected. This file should have 4 columns, listing the genomic coordinates and IDs for each restriction fragment.")
   }
@@ -152,24 +169,24 @@ setChicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
                paste(rmapfile[[4]][duplicated(rmapfile[[4]])], collapse=",")))
   }
   
-  defchic.settings
+  chicdiff.settings
 }
 
 # ----------
 
-.getTargetColumns <- function(targetRDSorRDAs){
+.getTargetColumns <- function(chicagoData){
   
-  conditions <- names(targetRDSorRDAs)
+  conditions <- names(chicagoData)
   targetColumns <- vector("list", length(conditions))
   for(i in seq_along(conditions)){
     temp <- conditions[[i]]
-    targetColumns[[i]] <- names(targetRDSorRDAs[[temp]])
+    targetColumns[[i]] <- names(chicagoData[[temp]])
   }
   targetColumns <- unlist(targetColumns)
   if(is.null(targetColumns)){
     targetColumns <- conditions
   } 
-  okay = (length(targetColumns) == length(conditions) | length(targetColumns) == length(unlist(targetRDSorRDAs)))
+  okay = (length(targetColumns) == length(conditions) | length(targetColumns) == length(unlist(chicagoData)))
   if(!okay){ stop("Peak file columns incorrectly specified") }
   
   targetColumns
@@ -198,21 +215,36 @@ setChicExperiment = function(designDir="", targetRDSorRDAs = NA, targetChs = NA,
 
 #-------------------------------Auxilliary functions-----------------------------------------------#
 
-.multimerge <- function(peakFiles)
+.multimerge <- function(peakFiles, targetColumns)
 {
-  templist <- lapply(peakFiles, fread)
-  peakMatrix <- Reduce(merge, templist)
+  peakDTs <- lapply(peakFiles, fread)
+  peakMatrix <- Reduce(function(x,y)
+    merge(x, y, 
+      by=c("baitChr","baitStart","baitEnd","baitID",         
+        "baitName","oeChr","oeStart","oeEnd",          
+         "oeID","oeName","dist"), all=T), peakDTs)
+  for(tc in targetColumns){
+    peakMatrix[is.na(get(tc)), c(tc):=0]
+  }
   peakMatrix
 }
 
-readAndFilterPeakMatrix <- function(peakFiles, targetColumns, targetRDSorRDAs, conditions, score){
+readAndFilterPeakMatrix <- function(peakFiles, targetColumns, chicagoData, conditions, score){
   ## Essentially reads in the peak matrix, taking the target columns if specified (else just takes everything) and filters for rows where at least
   ##one score is > 5 (or whatever is specified) and filters out trans interactions. 
+  
   if(length(peakFiles > 1)){
-    x <- .multimerge(peakFiles)
+    x <- .multimerge(peakFiles, targetColumns)
   } else {
     x <- fread(peakFiles)
   }
+
+  peakfile_columns <- colnames(x)
+  
+  if(!all(targetColumns %in% peakfile_columns)){
+    stop("All specified targetColumns must be present in the peak file(s)")  
+  }
+  
   all_baits <- unique(x$baitID)
   sel <- which(colnames(x) %in% targetColumns)
   x <- x[,c(1:11, sel), with=FALSE]
@@ -228,7 +260,7 @@ readAndFilterPeakMatrix <- function(peakFiles, targetColumns, targetRDSorRDAs, c
     sel2 <- rep(TRUE, nrow(x))
     for(i in seq_along(conditions)){
       temp <- conditions[[i]]
-      cols <- colnames(x)[colnames(x) %in% names(targetRDSorRDAs[[temp]])]
+      cols <- colnames(x)[colnames(x) %in% names(chicagoData[[temp]])]
       
       sel2 <- sel2 & rowSums(x[,!is.na(.SD[,cols, with = FALSE])]) >= 2 ##Remove any rows where there isn't at least 2 replicates for each condition with non-NA values
     } 
@@ -245,7 +277,7 @@ readAndFilterPeakMatrix <- function(peakFiles, targetColumns, targetRDSorRDAs, c
   x
 }
 
-.printMemoryFunction <- function(printMemory){
+.printMemory <- function(printMemory){
   if(printMemory == TRUE){
     print(gc(reset=TRUE))
   }
@@ -267,28 +299,48 @@ readAndFilterPeakMatrix <- function(peakFiles, targetColumns, targetRDSorRDAs, c
 
 #Pipeline - many of these arguments have defaults, but are assigned here explicitly for clarity.
 
-chicdiffPipeline <- function(defchic.settings, outprefix=NULL, printMemory=TRUE)
+chicdiffPipeline <- function(chicdiff.settings)
 {
   
   message("\n*** Running getRegionUniverse\n")
-  RU <- getRegionUniverse(defchic.settings)  
+  RU <- getRegionUniverse(chicdiff.settings)  
+  
+  .printMemory(chicdiff.settings[["printMemory"]])
   
   message("\n*** Running getControlRegionUniverse\n")
-  RUcontrol <- getControlRegionUniverse(defchic.settings, RU)
-  
+  RUcontrol <- getControlRegionUniverse(chicdiff.settings, RU)
+
+  .printMemory(chicdiff.settings[["printMemory"]])
+    
   message("\n*** Running getFullRegionData\n")
-  FullRegionData <- getFullRegionData(defchic.settings, RU, RUcontrol, suffix = "")
+  FullRegionData <- getFullRegionData(chicdiff.settings, RU, RUcontrol, suffix = "")
+  
+  .printMemory(chicdiff.settings[["printMemory"]])
   
   message("\n*** Running DESeq2Wrap for FullRegion\n")
-  DESeqOut <- DESeq2Wrap(defchic.settings, RU, FullRegionData[[1]])
+  DESeqOut <- DESeq2Wrap(chicdiff.settings, RU, FullRegionData[[1]])
+  
+  .printMemory(chicdiff.settings[["printMemory"]])
   
   message("\n*** Running DESeq2Wrap for FullControlRegion\n")
-  DESeqOutControl <- DESeq2Wrap(defchic.settings, RUcontrol, FullRegionData[[2]], suffix = "Control") 
+  if(chicdiff.settings[["norm"]]=="combined" & 
+     is.null(attributes(DESeqOut)$theta) & 
+     is.null(chicdiff.settings[["theta"]])){
+    warning("Normalisation weight theta is not defined and its inference may fail on control regions")
+  }
+  
+  DESeqOutControl <- DESeq2Wrap(chicdiff.settings, RUcontrol, FullRegionData[[2]], 
+                                suffix = "Control", theta = attributes(DESeqOut)$theta) 
+  
+  .printMemory(chicdiff.settings[["printMemory"]])
   
   message("\n*** Running IHWcorrection\n")
-  output <- IHWcorrection(defchic.settings, DESeqOut, FullRegionData[[1]], DESeqOutControl, FullRegionData[[2]], countput = FullRegionData[[3]]) 
+  output <- IHWcorrection(chicdiff.settings, DESeqOut, FullRegionData[[1]], 
+                          DESeqOutControl, FullRegionData[[2]], countput = FullRegionData[[3]]) 
   
-  print(defchic.settings)
+  .printMemory(chicdiff.settings[["printMemory"]])
+  
+  print(chicdiff.settings)
   print(sessionInfo())
   
   output
@@ -315,22 +367,26 @@ chicdiffPipeline <- function(defchic.settings, outprefix=NULL, printMemory=TRUE)
   }
 }
 
-getRegionUniverse <- function(defchic.settings, suffix = ""){
+getRegionUniverse <- function(chicdiff.settings, suffix = ""){
   
-  RUexpand = defchic.settings[["RUexpand"]]
-  rmapfile = defchic.settings[["rmapfile"]]
-  peakFiles = defchic.settings[["peakfiles"]]
-  targetColumns = defchic.settings[["targetColumns"]]
-  targetRDSorRDAs = defchic.settings[["targetRDSorRDAs"]]
-  score = defchic.settings[["score"]]
-  saveRDS = defchic.settings[["saveRDS"]]
+  RUexpand = chicdiff.settings[["RUexpand"]]
+  rmapfile = chicdiff.settings[["rmapfile"]]
+  peakFiles = chicdiff.settings[["peakfiles"]]
+  targetColumns = chicdiff.settings[["targetColumns"]]
+  chicagoData = chicdiff.settings[["chicagoData"]]
+  score = chicdiff.settings[["score"]]
+  saveRDS = chicdiff.settings[["saveAuxData"]]
+  outprefix = chicdiff.settings[["outprefix"]]
   
-  conditions <- names(targetRDSorRDAs)
+  conditions <- names(chicagoData)
   
-  x <- readAndFilterPeakMatrix(peakFiles = peakFiles, score = score, targetColumns = targetColumns, targetRDSorRDAs=targetRDSorRDAs, conditions = conditions)
+  x <- readAndFilterPeakMatrix(peakFiles = peakFiles, score = score, targetColumns = targetColumns, chicagoData=chicagoData, conditions = conditions)
   
   ## Expand the "point universe" to get "region universe" by "window" mode------------------
   
+  #baits <- unique(x$baitID)
+  #baits <- head(baits, 5000)
+  #x <- x[baitID %in% baits,]
   
   ##Just expand calls by s in each direction
   
@@ -364,7 +420,7 @@ getRegionUniverse <- function(defchic.settings, suffix = ""){
   RU.DT[,i.chr:=NULL]
   
   if(saveRDS == TRUE){
-    saveRDS(RU.DT, paste0("./RegionUniverse", suffix, ".Rds"))
+    saveRDS(RU.DT, paste0(outprefix, "_RegionUniverse", suffix, ".Rds"))
   }
   
   RU.DT
@@ -395,12 +451,13 @@ giveManySeeds <- function(bait, min, max, std){
 
 #-------------------------------------------getControlRegionUniverse----------------------------------------#
 
-getControlRegionUniverse <- function(defchic.settings, RU){
+getControlRegionUniverse <- function(chicdiff.settings, RU){
   
-  RUexpand <- defchic.settings[["RUexpand"]]
-  saveRDS <- defchic.settings[["saveRDS"]]
-  bmap <- fread(defchic.settings[["baitmapfile"]])
-  rmap <- fread(defchic.settings[["rmapfile"]])
+  RUexpand <- chicdiff.settings[["RUexpand"]]
+  saveRDS <- chicdiff.settings[["saveAuxData"]]
+  outprefix <- chicdiff.settings[["outprefix"]]
+  bmap <- fread(chicdiff.settings[["baitmapfile"]])
+  rmap <- fread(chicdiff.settings[["rmapfile"]])
   colnames(rmap) <- c("chr", "start", "end", "ID")
   colnames(bmap) <- c("chr", "start", "end", "ID", "baitname")
   
@@ -448,7 +505,7 @@ getControlRegionUniverse <- function(defchic.settings, RU){
   RUcontrol[,i.chr:=NULL]
   
   if(saveRDS){
-    saveRDS(RUcontrol, "ControlRegionUniverse.Rds")
+    saveRDS(RUcontrol, paste0(outprefix, "_ControlRegionUniverse.Rds"))
   }
   
   return(RUcontrol)
@@ -479,7 +536,7 @@ readRDSorRDA <- function(file){
 
 #------------------------------------------------------------------------------#
 
-.chicEstimateDistFun <- function (x, settings=defaultSettings()) {
+.chicEstimateDistFun <- function (x, settings=Chicago::defaultSettings()) {
   # Take the "refBinMean" column of the data x as f(d_b)
   # then interpolate & extrapolate to get f(d).
   
@@ -518,15 +575,17 @@ readRDSorRDA <- function(file){
 
 #--------------------------------------Non-parallel version--------------------------------------#
 
-getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix = ""){
+getFullRegionData1 <- function(chicdiff.settings, RU, is_control = FALSE, suffix = ""){
   
-  targetChs = defchic.settings[["targetChs"]]
-  targetRDSorRDAs = defchic.settings[["targetRDSorRDAs"]]
-  rmapfile = defchic.settings[["rmapfile"]]
-  saveRDS = defchic.settings[["saveRDS"]]
+  countData = chicdiff.settings[["countData"]]
+  chicagoData = chicdiff.settings[["chicagoData"]]
+  rmapfile = chicdiff.settings[["rmapfile"]]
+  saveRDS = chicdiff.settings[["saveAuxData"]]
+  outprefix = chicdiff.settings[["outprefix"]]
   
-  targetRDSorRDAFiles <- unlist(targetRDSorRDAs)
-  targetChFiles <- unlist(targetChs)
+
+  targetRDSorRDAFiles <- unlist(chicagoData)
+  targetChFiles <- unlist(countData)
   
   ## 03getInteractionParameters
   
@@ -541,7 +600,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
   
   if(!is_control){
     
-    conditions <- rep(names(targetRDSorRDAs), sapply(targetRDSorRDAs, length))
+    conditions <- rep(names(chicagoData), sapply(chicagoData, length))
     countput <- lapply(unique(conditions), assign, 
                        value = vector("list", length(targetRDSorRDAFiles)))
     names(countput) <- unique(conditions)
@@ -678,7 +737,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
     
     #This just keeps all of the loaded RDAs if we still need them for the count data because we don't have chinputs
     
-    if(is.null(targetChs)){ 
+    if(is.null(countData)){ 
       
       x <- x[, c("baitID", "otherEndID", "N"), with = FALSE]
       columnNames <- paste0("N.", names(targetRDSorRDAFiles))
@@ -708,15 +767,12 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
     countput <- rbindlist(countput)
     setnames(countput, "midpoint", "oeID_mid")
     
-    saveRDS(countput, "countput.Rds")
+    saveRDS(countput, paste0(outprefix, "_countput.Rds"))
   }
-  
-  
-  message("out of iterative reading function")
   
   baits <- sort(unique(RU$baitID)) ##baits to get information from
   
-  if(is.null(targetChs)){
+  if(is.null(countData)){
     message("Reconstructing countData")
     
     gc()
@@ -759,10 +815,10 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
   
   ##Inputs and parameters:
   
-  ##requires targetChs
+  ##requires countData
   
   ##2) Collect all of the read count information ----------------
-  if(!is.null(targetChs)){
+  if(!is.null(countData)){
     
     message("")
     countData <- vector("list", length(targetChFiles))
@@ -863,7 +919,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
   recast$sample <- names(targetRDSorRDAFiles)[recast$sample]
   
   recast$condition <- rep(
-    rep(names(targetRDSorRDAs), sapply(targetRDSorRDAs, length))
+    rep(names(chicagoData), sapply(chicagoData, length))
     , each=nrow(CountOut))
   
   
@@ -875,7 +931,7 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
   if(saveRDS == TRUE){
     message("Saving FullRegionData")
     
-    saveRDS(recast, paste0("./FullRegionData", suffix, ".Rds"))
+    saveRDS(recast, paste0(outprefix, "_FullRegionData", suffix, ".Rds"))
     
   }
   
@@ -893,16 +949,17 @@ getFullRegionData1 <- function(defchic.settings, RU, is_control = FALSE, suffix 
 
 #--------------------------- The version which reads significant and control interactions in parallel-------------#
 
-getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
+getFullRegionData2 <- function(chicdiff.settings, RU, RUcontrol, suffix = ""){
   
-  targetChs = defchic.settings[["targetChs"]]
-  targetRDSorRDAs = defchic.settings[["targetRDSorRDAs"]]
-  targetColumns = defchic.settings[["targetColumns"]]
-  rmapfile = defchic.settings[["rmapfile"]]
-  saveRDS = defchic.settings[["saveRDS"]]
+  countData = chicdiff.settings[["countData"]]
+  chicagoData = chicdiff.settings[["chicagoData"]]
+  targetColumns = chicdiff.settings[["targetColumns"]]
+  rmapfile = chicdiff.settings[["rmapfile"]]
+  saveRDS = chicdiff.settings[["saveAuxData"]]
+  outprefix = chicdiff.settings[["outprefix"]]
   
-  targetRDSorRDAFiles <- unlist(targetRDSorRDAs)
-  targetChFiles <- unlist(targetChs)
+  targetRDSorRDAFiles <- unlist(chicagoData)
+  targetChFiles <- unlist(countData)
   
   ## 03getInteractionParameters.R  
   
@@ -924,7 +981,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
   dispersions <- numeric(length(targetRDSorRDAFiles)) #only need one of these
   tempForCounts <- vector("list", length(targetRDSorRDAFiles))
   
-  conditions <- rep(names(targetRDSorRDAs), sapply(targetRDSorRDAs, length))
+  conditions <- rep(names(chicagoData), sapply(chicagoData, length))
   countput <- lapply(unique(conditions), assign, 
                      value = vector("list", length(targetRDSorRDAFiles)))
   names(countput) <- unique(conditions)
@@ -1103,7 +1160,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
     
     message("")
     
-    if(is.null(targetChs)){ 
+    if(is.null(countData)){ 
       x <- x[, c("baitID", "otherEndID", "N"), with = FALSE]
       columnNames <- paste0("N.", names(targetRDSorRDAFiles))
       setnames(x, old="N", new=columnNames[i])
@@ -1127,7 +1184,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
   setnames(countput, "midpoint", "oeID_mid")
   
   message("Saving counts\n")
-  saveRDS(countput, "countput.Rds")
+  saveRDS(countput, paste0(outprefix, "_countput.Rds"))
   
   
   # outData, outDataControl are our useful outputs from this part above  
@@ -1141,7 +1198,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
   
   ##2-Rds) If Chinputs are not given: Collect all of the read count information from Rds
   
-  if(is.null(targetChs)){
+  if(is.null(countData)){
     gc()
     message("Reconstructing countData")
     
@@ -1202,7 +1259,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
   }
   
   ##2-Chi) If Chinputs are given: Collect all of the read count information ----------------
-  if(!is.null(targetChs)){
+  if(!is.null(countData)){
     
     countData <- vector("list", length(targetChFiles))
     countDataControl <- vector("list", length(targetChFiles))
@@ -1361,7 +1418,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
   recast$sample <- names(targetRDSorRDAFiles)[recast$sample]
   
   recast$condition <- rep(
-    rep(names(targetRDSorRDAs), sapply(targetRDSorRDAs, length))
+    rep(names(chicagoData), sapply(chicagoData, length))
     , each=nrow(CountOut))
   
   setkey(recast, regionID)
@@ -1375,7 +1432,7 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
   recastControl$sample <- names(targetRDSorRDAFiles)[recastControl$sample]
   
   recastControl$condition <- rep(
-    rep(names(targetRDSorRDAs), sapply(targetRDSorRDAs, length))
+    rep(names(chicagoData), sapply(chicagoData, length))
     , each=nrow(CountOutControl))
   
   setkey(recastControl, regionID)
@@ -1385,9 +1442,9 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
   
   if(saveRDS == TRUE){
     message("Saving FullRegionData")
-    saveRDS(recast, paste0("./FullRegionData", suffix, ".Rds"))
+    saveRDS(recast, paste0(outprefix, "_FullRegionData", suffix, ".Rds"))
     message("Saving FullControlRegionData")
-    saveRDS(recastControl, paste0("./FullControlRegionData", suffix, ".Rds"))
+    saveRDS(recastControl, paste0(outprefix, "_FullControlRegionData", suffix, ".Rds"))
     
   }
   
@@ -1399,20 +1456,20 @@ getFullRegionData2 <- function(defchic.settings, RU, RUcontrol, suffix = ""){
 
 #-------------------------------The full getFullRegionDataWrapper----------------------------------------#
 
-getFullRegionData <- function(defchic.settings, RU, RUcontrol, suffix = ""){
+getFullRegionData <- function(chicdiff.settings, RU, RUcontrol, suffix = ""){
   
-  parallel = defchic.settings[["parallel"]]
+  parallel = chicdiff.settings[["parallel"]]
   
   if(parallel){
     
-    FullRegionData <- getFullRegionData2(defchic.settings = defchic.settings, RU = RU, RUcontrol = RUcontrol, suffix = "")
+    FullRegionData <- getFullRegionData2(chicdiff.settings = chicdiff.settings, RU = RU, RUcontrol = RUcontrol, suffix = "")
     
   } else{
     
     message("Reading data for significant interactions")
-    FullRegionData <- getFullRegionData1(defchic.settings = defchic.settings, RU = RU, is_control = FALSE, suffix = "")
+    FullRegionData <- getFullRegionData1(chicdiff.settings = chicdiff.settings, RU = RU, is_control = FALSE, suffix = "")
     message("\nReading data for control interactions")
-    FullRegionData[[2]] <- getFullRegionData1(defchic.settings = defchic.settings, RU = RUcontrol, is_control = TRUE, suffix = "")
+    FullRegionData[[2]] <- getFullRegionData1(chicdiff.settings = chicdiff.settings, RU = RUcontrol, is_control = TRUE, suffix = "")
     
   }
   
@@ -1433,12 +1490,35 @@ geoMean <- function(x, na.rm=FALSE) {
 
 #------------------------------------------------------------------------------#
 
-DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
-  ##By default, DESeq2 uses sample-specific scaling factors.
+DESeq2Wrap <- function(chicdiff.settings, RU, FullRegionData, suffix = "", theta = NULL){
   
-  rmapfile = defchic.settings[["rmapfile"]]
-  saveRDS = defchic.settings[["saveRDS"]]
+  Grid = chicdiff.settings[["theta_grid"]]
+  rmapfile = chicdiff.settings[["rmapfile"]]
+  saveRDS = chicdiff.settings[["saveAuxData"]]
+  outprefix = chicdiff.settings[["outprefix"]]
   
+  if (is.null(theta) & !is.null(chicdiff.settings[["theta"]])){
+    theta = chicdiff.settings[["theta"]]
+    #message("Mixing parameter theta set to the user-specified value of ", theta)
+  }
+
+  norm = chicdiff.settings[["norm"]]
+  if(!norm %in% c("standard", "fullmean", "combined")){
+    stop("DESeq2Wrap error: Unknown normalisation method.")
+  }
+    
+  if (!is.null(theta)){
+    if(theta == 1 & norm!="standard"){
+      warning("Mixing parameter theta set to 1, equivalent to norm = \"standard\". The norm method has been reset accordingly.")
+      norm = "standard"
+    }
+    
+    if(!theta & norm!="fullmean"){
+      warning("Mixing parameter theta set to 0, equivalent to norm = \"fullmean\". The norm method has been reset accordingly.")
+      norm = "fullmean"
+    }
+  }
+    
   ##Input data:
   
   fragData <- copy(FullRegionData) ## As otherwise it is altered by reference below and the IHW part breaks
@@ -1446,18 +1526,17 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   
   #message("saved a copy of FullRegionData")
   
-  
-  fragData.impute <- copy(fragData)
-  fragData.impute[,s_j.impute := geoMean(s_j, na.rm = TRUE), by=c("baitID", "otherEndID")]
-  fragData.impute[is.na(s_j), s_j:=s_j.impute]
-  fragData.impute[,FullMean.impute := geoMean(FullMean, na.rm = TRUE), by=c("baitID", "otherEndID")]
-  fragData.impute[is.na(FullMean), FullMean:=FullMean.impute]
+  #fragData.impute <- fragData 
+  #fragData.impute[,s_j.impute := geoMean(s_j, na.rm = TRUE), by=c("baitID", "otherEndID")]
+  #fragData.impute[is.na(s_j), s_j:=s_j.impute]
+  #fragData.impute[,FullMean.impute := geoMean(FullMean, na.rm = TRUE), by=c("baitID", "otherEndID")]
+  #fragData.impute[is.na(FullMean), FullMean:=FullMean.impute]
   
   ##NOTE: Standard normalization factors from DESeq2 used for certain sites later.
   
   ##construct an appropriate DESeq object
   
-  regionData.impute <- fragData.impute[,list(
+  regionData <- fragData[,list(
     N=sum(N),
     avDist=(min(distSign)+max(distSign))/2,
     Bmean=sum(Bmean),
@@ -1466,46 +1545,155 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
     s_j=s_j[1]
   ),by=c("baitID", "regionID", "sample")]
   
+  nSamples <- length(unique(regionData$sample))
   
-  
-  nSamples <- length(unique(regionData.impute$sample))
-  
-  regionDataMatrix <- matrix(regionData.impute$N,
+  regionDataMatrix <- matrix(regionData$N,
                              ncol=nSamples,
                              byrow = TRUE)
-  rownames(regionDataMatrix) <- unique(regionData.impute$regionID)
-  colnames(regionDataMatrix) <- unique(regionData.impute$sample)
+  rownames(regionDataMatrix) <- unique(regionData$regionID)
+  colnames(regionDataMatrix) <- unique(regionData$sample)
   colData <- data.frame(condition = fragData$condition[1:ncol(regionDataMatrix)])
   dds <- DESeqDataSetFromMatrix(countData = regionDataMatrix,
                                 colData = colData,
                                 design = ~ condition)
   
   dds.nullModel <- estimateSizeFactors(dds)
-  dds.M3 <- copy(dds.nullModel)
-  
   nullSizeFactors <- sizeFactors(dds.nullModel)
   
-  message("construct an appropriate DESeq object")
-  
-  
+  if(norm != "standard"){
+    dds.M3 <- copy(dds.nullModel)
+  }
+  if(norm == "combined"){
+    dds.M5 <- copy(dds.nullModel)
+  }
+
   ##model 1) standard DESeq2 model
-  dds.nullModel <- estimateDispersions(dds.nullModel)
-  dds.nullModel <- nbinomWaldTest(dds.nullModel)
+  if (norm == "standard"){
+    dds.nullModel <- estimateDispersions(dds.nullModel)
+    dds.nullModel <- nbinomWaldTest(dds.nullModel)
+  }
   
-  ##model 2) use fullMean scaling factors
-  normFactorsFull <- matrix(regionData.impute$FullMean, ncol=nSamples, byrow = TRUE)
+  ##model 2) skipped
   
-  normFactorsM3 <- normFactorsFull
-  normFactorsM3 <- normFactorsM3 / exp(rowMeans(log(normFactorsM3))) ##<- normalize to get geometric mean = 1
-  ##remove NA rows
-  selNA <- apply(normFactorsM3, 1, function(x){any(is.na(x))})
-  normFactorsM3[selNA,] <- rep(nullSizeFactors, each=sum(selNA))
-  normalizationFactors(dds.M3) <- normFactorsM3
+  #browser()
   
-  dds.M3 <- estimateDispersions(dds.M3)
-  dds.M3 <- nbinomWaldTest(dds.M3)
+  ##model 3) use fullMean scaling factors
+  if (norm != "standard"){
+    normFactorsFull <- matrix(regionData$FullMean, ncol=nSamples, byrow = TRUE)
+    
+    normFactorsM3 <- normFactorsFull
+    normFactorsM3 <- normFactorsM3 / exp(rowMeans(log(normFactorsM3))) ##<- normalize to get geometric mean = 1
+    ##remove NA rows
+    selNA <- apply(normFactorsM3, 1, function(x){any(is.na(x))})
+    normFactorsM3[selNA,] <- rep(nullSizeFactors, each=sum(selNA))
+    
+
+    # sf2 <- estimateSizeFactorsForMatrix(counts(dds.M3)/normFactorsM3)
+    # sf2mat <- matrix(rep(sf2,nrow(normFactorsM3)), 
+    #                  ncol=nSamples, nrow=nrow(normFactorsM3), byrow=T) 
+    
+  }
+  
+  if (norm == "fullmean"){
+    
+    normalizationFactors(dds.M3) <- normFactorsM3
+    
+    dds.M3 <- estimateDispersions(dds.M3)
+    dds.M3 <- nbinomWaldTest(dds.M3)
+  }
+  
+  ## model 4) skipped
+    
+  ##model 5) use a weighted mean of fullMean or DESeq2 scaling factors
+  ##that minimises the overall variance of the counts 
+  ##for the whole sample
+  
+  if (norm=="combined"){
+    
+    nsf = matrix(rep(nullSizeFactors,nrow(normFactorsM3)), 
+                 ncol=nSamples, nrow=nrow(normFactorsM3), byrow=T) 
+    
+    tt = theta
+    
+    if(is.null(tt)){
+      
+      message("Optimising scaling factors...")
+      
+      glen = length(Grid)
+      # grid_normFactorsM5 <- matrix(nrow=nrow(normFactorsM3),ncol=glen*nSamples)
+      # varsM5 = matrix(nrow = nrow(normFactorsM3),ncol=glen)
+      i = 1
+      deviances = vector("numeric", length=glen)
+      
+      ddsTest <- DESeqDataSetFromMatrix(countData = regionDataMatrix,
+                                        colData = colData,
+                                        design = ~ 1) # sic!
+      
+      for(tt in Grid){
+        
+        sc <- normFactorsM3*(1-tt)+nsf*tt
+        # sc <- exp (log(normFactorsM3)*(1-tt)+log(nsf)*tt)
+        
+        sc <- sc / exp(rowMeans(log(sc)))
+        
+        
+        normalizationFactors(ddsTest) <- sc
+  
+        ddsTest <- estimateDispersions(ddsTest)
+        ddsTest <- nbinomWaldTest(ddsTest)
+        
+        #deviances[i] = median(mcols(ddsTest)$deviance)
+        deviances[i] = sum(mcols(ddsTest)$deviance)
+        
+        # grid_normFactorsM5[,(1+(i-1)*nSamples):(i*nSamples)] <- sc
+          
+        # varsM5[,i] <- t(rowVars(counts(dds.M5)/sc))
+        
+        i=i+1
+        
+      }
+      
+      message("Total deviances by theta (Fullmean --> Standard):")
+      cat(sprintf("%f", deviances), "\n", file=stderr())
+      
+      tt = Grid[which(deviances==min(deviances)[1])]
+      
+    } 
+    
+    message("Theta=", tt)
+
+    sc <- normFactorsM3*(1-tt)+nsf*tt
+    # sc <- exp (log(normFactorsM3)*(1-tt)+log(nsf)*tt)
+    
+    sc <- sc / exp(rowMeans(log(sc)))
+    
+    normalizationFactors(dds.M5) <- sc
+    
+    dds.M5 <- estimateDispersions(dds.M5)
+    dds.M5 <- nbinomWaldTest(dds.M5)
+    
+    # varsM5 <- cbind(varsM5, grid_normFactorsM5)
+    # 
+    # normFactorsM5 <- t(apply(varsM5,1,function(x){
+    #   whichminvar <- which(x[1:glen]==min(x[1:glen]))[1]
+    #   x[(1+glen+(whichminvar-1)*nSamples):(glen+whichminvar*nSamples)]
+    # }))
+    # 
+    # # Purely for diagnostic purposes    
+    # whichMinVar5 <- apply(varsM5, 1, function(x)
+    #   which(x[1:glen]==min(x[1:glen]))[1])
+      
+    # normalizationFactors(dds.M5) <- normFactorsM5
+    # 
+    # dds.M5 <- estimateDispersions(dds.M5)
+    # dds.M5 <- nbinomWaldTest(dds.M5)
+  }
+  
+
   
   ##get annotation information -----------
+  
+  message("Processing model output")
   
   ##other ends:
   rmap <- fread(rmapfile)
@@ -1524,53 +1712,75 @@ DESeq2Wrap <- function(defchic.settings, RU, FullRegionData, suffix = ""){
   colnames(rmap) <- c("baitchr", "baitstart", "baitend", "baitID")
   annoData <- merge(annoData, rmap, by.x="baitID", by.y="baitID")
   
-  
   setkey(annoData, regionID)
   stopifnot(identical(1:nrow(annoData), annoData$regionID))
   
-  results <- as.data.table(as.data.frame(results(dds.M3)), keep.rownames = "id")
+  
+  if (norm == "standard" ){
+    res = results(dds.nullModel)
+    message("Standard DESeq2 normalisation: # unweighted interactions with padj<0.05: ",
+            nrow(res[res$padj<0.05 & !is.na(res$padj),]))
+    if(saveRDS == TRUE){
+      message("Saving the DESeq object")
+      saveRDS(dds.nullModel, paste0(outprefix, "_DESeqObj", suffix, ".Rds"))
+    }
+  }
+  if (norm == "fullmean"){
+    res = results(dds.M3)
+    message("Chicago full mean-based normalisation: # unweighted interactions with padj<0.05: ",
+            nrow(res[res$padj<0.05 & !is.na(res$padj),]))
+    if(saveRDS == TRUE){
+      message("Saving the DESeq object")
+      saveRDS(dds.M3, paste0(outprefix, "_DESeqObj", suffix, ".Rds"))
+    }
+  }
+  if (norm == "combined"){
+    res = results(dds.M5)
+    message("combined normalisation: # unweighted interactions with padj<0.05: ",
+            nrow(res[res$padj<0.05 & !is.na(res$padj),]))
+    # message("Weights of standard [vs Fullmean] scaling factors used for normalisation")
+    # w = matrix(c(Grid, table(whichMinVar5)/length(whichMinVar5)), nrow=2, byrow=T, 
+    #            dimnames = list(c("weight", "% cases")))
+    # print(w)
+    if(saveRDS == TRUE){
+      message("Saving the final DESeq object")
+      saveRDS(dds.M5, paste0(outprefix, "_DESeqObj", suffix, ".Rds"))
+    }
+  }
+  
+  results <- as.data.table(as.data.frame(res), keep.rownames = "id")
   results$id <- as.integer(results$id)
   setkey(results, id)
   
-  out <- cbind(
-    results,
-    annoData
-  )
-  
+  out <- cbind(results,annoData)
   out[,id := NULL]
   
-  message("outModel")
-  
-  
-  results.null <- as.data.table(as.data.frame(results(dds.nullModel)), keep.rownames = "id")
-  results.null$id <- as.integer(results.null$id)
-  setkey(results.null, id)
-  
-  out.nullModel <- cbind(
-    results.null,
-    annoData
-  )
-  
-  out.nullModel[,id := NULL]
-  
-  message("out.nullModel")
-  
-  
-  
-  if(saveRDS == TRUE){
-    saveRDS(out, paste0("./outPilot", suffix, ".Rds"))
-    saveRDS(out.nullModel, paste0("./outStandardDESeq", suffix, ".Rds"))
-  }
-  
-  #message("savedRDS")
-  
+  if(exists("tt"))
+    attributes(out)$theta <- tt
+
   out 
+
+  # results.null <- as.data.table(as.data.frame(results(dds.nullModel)), keep.rownames = "id")
+  # results.null$id <- as.integer(results.null$id)
+  # setkey(results.null, id)
+  # 
+  # out.nullModel <- cbind(
+  #   results.null,
+  #   annoData
+  # )
+  # 
+  # out.nullModel[,id := NULL]
+  # 
+  # message("out.nullModel")
+  
 }
 
 #-----------------------------IHW and plotting functions-------------------------------#
 
-plotdiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, plotBaitNames = TRUE, 
-                          plotBaitIDs = TRUE, plevel1 = 5, plevel2 = 3, xlim=c(-1e6,1e6), bgCol = "black", 
+plotDiffBaits <- function(output, countput, baitmapfile, baits = NULL, 
+                          n = 3, plotBaitNames = TRUE, 
+                          plotBaitIDs = TRUE, pcol="weighted_padj", 
+                          plevel1 = 5, plevel2 = 3, xlim=c(-1e6,1e6), bgCol = "black", 
                           lev1Col = "red", lev2Col = "blue", ...){
   
   if(any(class(output) == "character")){
@@ -1605,7 +1815,7 @@ plotdiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, pl
   
   conditions <- unique(countput_coord[,condition])
   
-  out[, names(out)[!(names(out) %in% c("OEstart", "OEend","baitID", "weighted_pvalue"))] := NULL]
+  out[, names(out)[!(names(out) %in% c("OEstart", "OEend","baitID", pcol))] := NULL]
   
   colnames(bmap) <- c("chr", "start", "end", "baitID", "name")
   bmap[, chr := NULL]
@@ -1685,7 +1895,7 @@ plotdiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, pl
     
     merged_dat <- merge(dat, temp_out, by = c("OEstart", "OEend"))
     merged_dat[,width := NULL]
-    merged_dat[,minuslogpvalue := -log10(weighted_pvalue)]
+    merged_dat[,minuslogpvalue := -log10(get(pcol))]
     
     merged_dat[minuslogpvalue <= -log(0.05), pvalue_param := "blue"]
     merged_dat[minuslogpvalue <= -log10(0.005) & minuslogpvalue > -log10(0.05), pvalue_param := "light red"]
@@ -1712,12 +1922,12 @@ plotdiffBaits <- function(output, countput, baitmapfile, n = 3, baits = NULL, pl
 
 #---------------------------------------------------#
 
-IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutControl, FullControlRegionData,
+IHWcorrection <- function(chicdiff.settings, DESeqOut, FullRegionData, DESeqOutControl, FullControlRegionData,
                           countput, DiagPlot = TRUE, diffbaitPlot = TRUE, suffix = ""){
   
-  saveRDS = defchic.settings[["saveRDS"]]
-  baitmapfile = defchic.settings[["baitmapfile"]]
-  device = defchic.settings[["device"]]
+  baitmapfile = chicdiff.settings[["baitmapfile"]]
+  device = chicdiff.settings[["device"]]
+  outprefix = chicdiff.settings[["outprefix"]]
   
   out <- DESeqOut ##DESeqOut and DESeqOutControl
   RU.recast <- FullRegionData ##FullRegionData and FullControlRegionData
@@ -1757,10 +1967,10 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
   
   if(DiagPlot == TRUE){
     plot(ihwRes)
-    cowplot::ggsave("IHWweightPlot.png", device = "png", path = "./")
+    cowplot::ggsave(paste0(outprefix, "_IHWweightPlot.png"), device = "png", path = "./")
     dev.off()
     plot(ihwRes, what = "decisionboundary")
-    cowplot::ggsave("IHWdecisionBoundaryPlot.png", device = "png", path = "./")
+    cowplot::ggsave(paste0(outprefix, "_IHWdecisionBoundaryPlot.png"), device = "png", path = "./")
     dev.off()
   }
   
@@ -1807,60 +2017,106 @@ IHWcorrection <- function(defchic.settings, DESeqOut, FullRegionData, DESeqOutCo
   out$weight <- out$avWeights/mean(out$avWeights) ##renormalize
   out[,weighted_pvalue := pvalue/weight]
   
+  out[, weighted_padj := p.adjust(weighted_pvalue, method="BH")]
+  
   message("applied to test data")
   
   
   if (diffbaitPlot == TRUE){
-    sel <- order(out$weighted_pvalue)
+    sel <- order(out$weighted_padj)
     baits <- sample(head(unique(out[sel]$baitID), 100), 4)
-    plotdiffBaits(output = out, countput = countput, baitmapfile = baitmapfile, baits = baits)
-    cowplot::ggsave(paste0("diffbaitPlot",".",device), device = device, path = "./")
+    plotDiffBaits(output = out, countput = countput, baitmapfile = baitmapfile, baits = baits)
+    cowplot::ggsave(paste0(outprefix, "_diffbaitPlot",".",device), device = device, path = "./")
     dev.off()
   }
   
-  
-  saveRDS(out, paste0("Weighted", suffix, ".Rds"))
+  saveRDS(out, paste0(outprefix, "_results", suffix, ".Rds"))
   
   return(out)
 }
 
 
-getCandidateInteractions <- function(defchic.settings, output, peakFiles, pvcut, deltaAsinhScore){
+getCandidateInteractions <- function(output, peakFiles, 
+                                     chicdiff.settings, 
+                                     pcol = "weighted_padj",
+                                     method = c("min", "hmp")[1], 
+                                     deltaAsinhScore=1,                                      
+                                     pvcut = 0.05){
   
-  targetRDSorRDAs = defchic.settings[["targetRDSorRDAs"]]
+  chicagoData = chicdiff.settings[["chicagoData"]]
   peakFiles <- fread(peakFiles)
-  output <- readRDS(output)
   
-  res <- output[weighted_pvalue < pvcut]
-  setkey(res, baitID, minOE, maxOE)
+  if(is.character(output)){
+    output <- readRDS(output)
+  }
+  
+  if (!method %in% c("min", "hmp")){
+      stop ("getCandidateInteractions error: Unknown method to combine p-values (should be 'min' or 'hmp')")
+  }
+  setkey(output, baitID, minOE, maxOE)
   
   peakFiles <- peakFiles[,oeID1:=oeID]
+
+  cond1names <- character(0)
+  if(length(names(chicagoData[[1]]))){ 
+    cond1names <- names(chicagoData[[1]])
+  }else{
+    cond1names <- names(chicagoData)[1]
+  }
+                      
+  cond2names <- character(0)
+  if(length(names(chicagoData[[2]]))){
+    cond2names <- names(chicagoData[[2]])
+  }else{
+    cond2names <- names(chicagoData)[2]
+  } 
+    
+  #res <- output[get(pcol) < pvcut]
   
-  outpeak <- foverlaps(peakFiles, res, by.x=c("baitID", "oeID", "oeID1"), by.y=c("baitID", "minOE", "maxOE"), nomatch =0, mult = "all")
+  if(!is.null(names(chicagoData[[1]]))){ # replicate-level peakFile
+    peakFiles[,cond1mean:= asinh(rowMeans(.SD)), .SDcols=cond1names]
+    peakFiles[,cond2mean:= asinh(rowMeans(.SD)), .SDcols=cond2names]
+    peakFiles[,delta:=abs(cond1mean-cond2mean)]  
+    peakFiles[,cond1mean:=NULL]
+    peakFiles[,cond2mean:=NULL]
+  }
+  else{ # merged peakFile
+    peakFiles[,delta:=abs(get(names(chicagoData)[2])-get(names(chicagoData)[1]))] 
+  }
   
-  outpeak[,cond1mean:= asinh(rowMeans(.SD)), .SDcols=names(targetRDSorRDAs[[1]])]
-  outpeak[,cond2mean:= asinh(rowMeans(.SD)), .SDcols=names(targetRDSorRDAs[[2]])]
-  outpeak[,delta:=abs(cond1mean-cond2mean)]  
-  outpeak[,cond1mean:=NULL]
-  outpeak[,cond2mean:=NULL]
+  outpeak <- foverlaps(peakFiles, output, by.x=c("baitID", "oeID", "oeID1"), 
+                       by.y=c("baitID", "minOE", "maxOE"), nomatch =0, mult = "all")
   
-  outpeak<- outpeak[delta > deltaAsinhScore]
+  pcol_out = ifelse(method=="min", paste0("min_", pcol), 
+                    paste0("hm_", pcol))
   
-  # This is to include the columns whose names are listed in names(targetRDSorRDAs[[n]]) and are unknown a priori
+  if(method=="hmp"){
+    outpeak[is.na(get(pcol)) | get(pcol)>1, c(pcol):=1]
+  }
+  
+  # This is to include the columns whose names are listed in names(chicagoData[[n]]) and are unknown a priori
   expr = paste0('list( 
-                baitChr=baitChr[1], baitstart=baitstart[1], 
+                baitChr = baitChr[1], baitstart = baitstart[1], 
                 baitend = baitend[1], baitName = baitName[1],',
-                paste(names(targetRDSorRDAs[[1]]), collapse=","), ",",
-                paste(names(targetRDSorRDAs[[2]]), collapse=","), 
-                ', deltaAsinhScore = delta[1],
+                paste0(cond1names, "=", cond1names, "[1]", collapse=","), ',',
+                paste0(cond2names, "=", cond2names, "[1]", collapse=","), ',',
+                ifelse(method=="min", paste0(pcol_out, "=min(", pcol, ")"), 
+                              paste0(pcol_out, "=p.hmp(", pcol, ")")),      
+                ', 
+              deltaAsinhScore = delta[1],
               regionIDs = paste(regionID, collapse=","),
-              log2FoldChanges = paste(log2FoldChange, collapse = ","),
-              weighted_pvalues = paste(weighted_pvalue, collapse = ","),  
+              log2FoldChanges = paste(log2FoldChange, collapse = ","), 
+               ',
+              pcol, ' = paste(', pcol, ', collapse = ","),  
               OEranges = paste(OEstart, OEend, sep = "-", collapse= ","))
               ')
-  # view with parse(text=expr)  
+
+  #print (parse(text=expr) )
+  
+  setkey(outpeak, baitID, oeID)
   final <- outpeak[, eval(parse(text=expr)),  by=c("baitID", "oeID")]
   
-  final
+  final[get(pcol_out) <= pvcut]
+
   
 }

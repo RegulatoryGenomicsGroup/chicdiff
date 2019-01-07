@@ -1,14 +1,14 @@
-\name{plotdiffBaits}
-\alias{plotdiffBaits}
+\name{plotDiffBaits}
+\alias{plotDiffBaits}
 
 \title{
 Plot differential baits
 }
 \description{
-This function is a part of IHW function. It plots n (n=3 by default) from top 100 differential baits. 
+This function plots the profiles of either user-specified baits of interest, or the top differential baits. 
 }
 \usage{
-plotdiffBaits(output, countput, baitmapfile, n = 3, baits = NULL, plotBaitNames = TRUE, plotBaitIDs = TRUE, plevel1 = 5, plevel2 = 3, xlim=c(-1e6,1e6), bgCol = "black", lev1Col = "red", lev2Col = "blue", ...)
+plotDiffBaits(output, countput, baitmapfile, baits = NULL, n = 3, plotBaitNames = TRUE, plotBaitIDs = TRUE, pcol = "weighted_padj", plevel1 = 5, plevel2 = 3, xlim=c(-1e6,1e6), bgCol = "black", lev1Col = "red", lev2Col = "blue", ...)
 }
 
 \arguments{
@@ -16,7 +16,7 @@ plotdiffBaits(output, countput, baitmapfile, n = 3, baits = NULL, plotBaitNames 
   
   \item{countput}{countput file, containing counts recovered from the .Rda Chicago files, produced in  \code{\link{getFullRegionData1}} or \code{\link{getFullRegionData2}}.}
 
-  \item{baitmapfile}{The location of the bait map file. Recovered from defchic.settings, produced by  \code{\link{setChicExperiment}}.}
+  \item{baitmapfile}{The location of the bait map file. Recovered from defchic.settings, produced by  \code{\link{setChicdiffExperiment}}.}
 
   \item{n}{The number of baits to plot (ignored if \code{baits} is specified). The differential landscape of n random unique baits will be displayed.}
 
@@ -26,9 +26,11 @@ plotdiffBaits(output, countput, baitmapfile, n = 3, baits = NULL, plotBaitNames 
 
   \item{plotBaitIDs}{plot the bait IDs at the top of the plots? TRUE by default.} 
   
-  \item{plevel1}{the hard score threshold = 5}
+  \item{pcol}{the name of the p-value column to plot (default: weighted_padj).}
 
-  \item{plevel2}{the soft score threshold = 3}
+  \item{plevel1}{the hard score threshold (default: 5).}
+
+  \item{plevel2}{the soft score threshold (default: 3).}
 
   \item{xlim}{the area around the bait to plot. By default it is set up to 1Mb in each direction.}
 
@@ -51,7 +53,7 @@ Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 
 \seealso{
-  \code{\link{setChicExperiment}}, \code{\link{getFullRegionData1}}, \code{\link{getFullRegionData2}}, \code{\link{IHWcorrection}}
+  \code{\link{setChicdiffExperiment}}, \code{\link{chicdiffPipelne}}, \code{\link{getFullRegionData1}}, \code{\link{getFullRegionData2}}, \code{\link{IHWcorrection}}
 }
 
 \examples{
