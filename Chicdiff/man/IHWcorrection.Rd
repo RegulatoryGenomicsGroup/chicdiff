@@ -13,7 +13,7 @@ IHWcorrection(defchic.settings, DESeqOut, FullRegionData, DESeqOutControl, FullC
 }
 
 \arguments{
-  \item{defchic.settings}{settings defined by \code{\link{setchicExperiment}}.}
+  \item{defchic.settings}{settings defined by \code{\link{setChicdiffExperiment}}.}
   \item{DESeqOut}{output of the \code{\link{DESeq2Wrap}} function run on the Region Universe.}
   \item{FullRegionData}{Full Region Universe data of the \code{\link{getFullRegionData}}. It is the first element of the FullRegionData vector of three elements.}
   \item{DESeqOutControl}{output of the \code{\link{DESeq2Wrap}} function run on the Control Region Universe}
@@ -36,7 +36,7 @@ Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 
 \seealso{
-  \code{\link{setChicExperiment}}, \code{\link{getFullRegionData}}, \code{\link{DESeq2Wrap}}, \code{\link{plotdiffBaits}}
+  \code{\link{setChicdiffExperiment}}, \code{\link{getFullRegionData}}, \code{\link{DESeq2Wrap}}, \code{\link{plotDiffBaits}}
 }
 
 \examples{

@@ -12,7 +12,7 @@ getRegionUniverse(defchic.settings)
 }
 
 \arguments{
-  \item{defchic.settings}{defchic.settings defined by \code{\link{setChicExperiment}}}
+  \item{defchic.settings}{defchic.settings defined by \code{\link{setChicdiffExperiment}}}
 }
 
 \value{
@@ -24,7 +24,7 @@ Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 
 \seealso{
-  \code{\link{setChicExperiment}}
+  \code{\link{setChicdiffExperiment}}
 }
 \examples{
 # path to recover test data

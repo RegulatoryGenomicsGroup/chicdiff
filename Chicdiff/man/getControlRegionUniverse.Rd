@@ -14,7 +14,7 @@ For every contact from Region Universe this function:
 getControlRegionUniverse(defchic.settings, RU)
 }
 \arguments{
-  \item{defchic.settings}{defchic.settings defined by running \code{\link{setChicExperiment}}}
+  \item{defchic.settings}{defchic.settings defined by running \code{\link{setChicdiffExperiment}}}
   \item{RU}{Region Universe defined by running \code{\link{getRegionUniverse}}}
 }
 
@@ -27,7 +27,7 @@ Jonathan Cairns, William Orchard, Valeriya Malysheva and Mikhail Spivakov
 }
 
 \seealso{
-  \code{\link{setChicExperiment}}
+  \code{\link{setChicdiffExperiment}}
 }
 
 \examples{

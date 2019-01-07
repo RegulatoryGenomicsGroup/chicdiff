@@ -8,30 +8,33 @@ Chicdiff pipeline function
 This function runs data through the Chicdiff pipeline.
 }
 \usage{
-chicdiffPipeline(defchic.settings)
+chicdiffPipeline(chicdiff.settings)
 }
 
 \arguments{
-  \item{defchic.settings}{
-  defchic.settings set up using setchicExperiment function.
+  \item{chicdiff.settings}{
+  chicdiff.settings defined using the \code{\link{setChicdiffExperiment}} function.
 }
 }
 
 \value{
-If saveRDS argument of setchicExperiment was set to FALSE, then Chicdiff returns 6 objects:
-  \item{<test_name>.out}{File containing all settings used for the run, information about the version of all packages used to run the pipeline, comments of the pipeline as passing through every crucial function}
-  \item{Weighted.Rds}{Data.table containing all information for contacts that went through the chicdiff comparative analysis. This file includes the contact details, the weight attributed to every contact related region and weighted pvalue.}
-  \item{countput.Rds}{Contains the counts, Bmean and the max score per contact}
-  \item{diffbaitPlot.pdf}{By default this plot shows random 4 differentially interacting regions.}
-  \item{IHWdecisionBoundaryPlot.png}{IHW Boundary decision plot, produced on the control data.}
-  \item{IHWweightPlot.png}{IHW weight plot, produced on the control data.}
+\code{setChicdiffExperiment} returns a data.table containing the full output of the chicdiff pipeline.
 
-Otherwise, if saveRDS argument of setchicExperiment was set to TRUE, Chicdiff returns 4 more objects:
-  \item{RegionUniverse.Rds}{Contains contact - region annotations}
-  \item{ControlRegionUniverse.Rds}{Contains control contact - region annotations}
-  \item{FullRegionData.Rds}{Contains technical Chicago info on contact - region annotations}
-  \item{FullControlRegionData.Rds}{Contains technical Chicago info on control contact - region annotations}
-  \item{DESeq_object}{Standard DESeq object}
+In addition, it saves the following data into files:
+  \item{<outprefix>_results.Rds}{Data.table containing all information for contacts that went through the chicdiff comparative analysis. This file includes the contact details, the weight attributed to every contact related region and weighted pvalues (raw and adjusted).}
+  \item{<outprefix>_settings.Rds}{File containing all settings used for the run.}
+  \item{<outprefix>_countput.Rds}{Contains the counts, Bmean and the max score per contact}
+  \item{<outprefix>_diffbaitPlot.pdf}{By default this plot shows random 4 differentially interacting regions.}
+  \item{<outprefix>_IHWdecisionBoundaryPlot.png}{IHW Boundary decision plot, produced on the control data.}
+  \item{<outprefix>_IHWweightPlot.png}{IHW weight plot, produced on the control data.}
+
+Otherwise, if the saveAuxData setting in setChicdiffExperiment was set to TRUE, Chicdiff returns 4 more objects:
+  \item{<outprefix>_RegionUniverse.Rds}{Contains contact - region annotations}
+  \item{<outprefix>_ControlRegionUniverse.Rds}{Contains control contact - region annotations}
+  \item{<outprefix>_FullRegionData.Rds}{Contains technical Chicago info on contact - region annotations}
+  \item{<outprefix>_FullControlRegionData.Rds}{Contains technical Chicago info on control contact - region annotations}
+  \item{<outprefix>_DESeqObj.Rds}{The DESeq object from the (final) run on the test data}
+  \item{<outprefix>_DESeqObjControl.Rds}{The DESeq object from the run on the control data}
 }
 
 \author{
@@ -42,7 +45,7 @@ This pipeline runs the following functions in order:
 
 - \code{\link{getRegionUniverse}}
 
-- \code{\link{getControlRegionUniverse3}}
+- \code{\link{getControlRegionUniverse}}
 
 - \code{\link{getFullRegionData}} 
 
@@ -52,7 +55,7 @@ This pipeline runs the following functions in order:
 
 }
 \seealso{
-  \code{\link{setChicExperiment}}
+  \code{\link{setChicdiffExperiment}},   \code{\link{plotDiffBaits}},   \code{\link{getCandidateInteractions}}
 }
 
 \examples{
