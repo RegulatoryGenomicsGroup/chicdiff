@@ -1867,12 +1867,12 @@ plotDiffBaits <- function(output, countput, baitmapfile, baits = NULL,
             panel.grid = element_line(colour = "grey87"), 
             panel.grid.major = element_line(size = rel(0.5)), 
             panel.grid.minor = element_line(size = rel(0.25)), 
-            legend.position = "none", plot.title = element_text(hjust = 0.5),
+            legend.position = "none",
             axis.text.x = element_text(size = 8),
             axis.text.y = element_text(size = 8),
             axis.title.x = element_blank(),
             axis.title.y = element_text(size = 8),
-            plot.title = element_text(size = 10)) +
+            plot.title = element_text(size = 10, hjust = 0.5)) +
       ylab("N")
     
     if(plotBaitNames & plotBaitIDs){
@@ -1901,7 +1901,8 @@ plotDiffBaits <- function(output, countput, baitmapfile, baits = NULL,
             panel.grid = element_line(colour = "grey87"), 
             panel.grid.major = element_line(size = rel(0.5)), 
             panel.grid.minor = element_line(size = rel(0.25)), 
-            legend.position = "none", plot.title = element_text(hjust = 0.5),
+            legend.position = "none", 
+            plot.title = element_text(hjust = 0.5, size=10),
             axis.text.x = element_text(size = 8),
             axis.text.y = element_text(size = 8),
             axis.title.x = element_text(size = 8),
