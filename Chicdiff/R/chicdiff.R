@@ -29,7 +29,7 @@ defaultChicdiffSettings <- function()
 ### both override chicdiff.settings
 
 setChicdiffExperiment = function(designDir="", chicagoData = NA, countData = NA, peakfiles = NA, 
-                                 outprefix = "", settings=list(), settingsFile=NULL, inputfiles = NA,
+                                 outprefix = "test", settings=list(), settingsFile=NULL, inputfiles = NA,
                                  chicdiff.settings=defaultChicdiffSettings())
 {
   

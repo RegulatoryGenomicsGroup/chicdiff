@@ -7,7 +7,7 @@ Set experiment
 Creates the full set of settings for Chicdiff
 }
 \usage{
-setChicdifExperiment(designDir="", chicagoData = NA, countData = NA, peakfiles = NA, outprefix="", targetColumns = NA, settings=list(), settingsFile=NULL, inputfiles = NA, chicdiff.settings=defaultChicdiffSettings())
+setChicdifExperiment(designDir="", chicagoData = NA, countData = NA, peakfiles = NA, outprefix="test", targetColumns = NA, settings=list(), settingsFile=NULL, inputfiles = NA, chicdiff.settings=defaultChicdiffSettings())
 }
 
 \arguments{
