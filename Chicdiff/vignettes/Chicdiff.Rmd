@@ -232,7 +232,7 @@ IHWweightPlot <- png::readPNG(file.path(resultsPath,"test_diffbaitPlot.png"))
 grid::grid.raster(IHWweightPlot)
 ```
 
-To plot the profiles of specific baits of interest using ```plotDiffBaits()```, it needs to be provided with the output data table (saved in *results.Rds* by ```chicdiffPipeline```), count table (saved in *countput.Rds*), baitmap file (from *Chicago* design directory) and a vector of baitIDs of interest (see ```?plotDiffBaits``` for the description of additional parameters).
+To plot the profiles of specific baits of interest using ```plotDiffBaits()```, it needs to be provided with the output data table (saved in test_results.Rds by ```chicdiffPipeline```, assuming that ```outprefix="test"``` by default), count table (saved in test_countput.Rds), baitmap file (from *Chicago* design directory) and a vector of baitIDs of interest (see ```?plotDiffBaits``` for the description of additional parameters).
 
 ```{r}
 
