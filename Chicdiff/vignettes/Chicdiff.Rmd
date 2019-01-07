@@ -236,12 +236,12 @@ To plot the profiles of specific baits of interest using ```plotDiffBaits()```, 
 
 ```{r}
 
-output <- readRDS(file.path(resultsPath, "results.Rds"))
-countput <- readRDS(file.path(resultsPath, "countput.Rds"))
-bmap <- fread(file.path(testDesignDir, "chr19_GRCh37_HindIII.baitmap"))
+outputRds <- file.path(resultsPath, "results.Rds")
+countputRds <- file.path(resultsPath, "countput.Rds")
+bmapRds <- file.path(testDesignDir, "chr19_GRCh37_HindIII.baitmap")
 
 baits <- c(327182, 330614,330598, 327700)
-plotDiffBaits(output, countput, bmap, baits)
+plotDiffBaits(outputRds, countputRds, bmapRds, baits)
 
 ```
 

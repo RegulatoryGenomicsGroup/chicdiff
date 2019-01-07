@@ -1781,7 +1781,8 @@ plotDiffBaits <- function(output, countput, baitmapfile, baits = NULL,
                           n = 3, plotBaitNames = TRUE, 
                           plotBaitIDs = TRUE, pcol="weighted_padj", 
                           plevel1 = 5, plevel2 = 3, xlim=c(-1e6,1e6), bgCol = "black", 
-                          lev1Col = "red", lev2Col = "blue", ...){
+                          lev1Col = "red", lev2Col = "blue", plotBmean = FALSE, plotKey = TRUE,
+                          ...){
   
   if(any(class(output) == "character")){
     if(file.exists(output)){
@@ -1831,12 +1832,14 @@ plotDiffBaits <- function(output, countput, baitmapfile, baits = NULL,
   chroms_bait <- bmap[bmap[,baitID %in% baits]]
   chroms_bait[, midpoint := (start+end)/2]
   chroms_bait[, c("start", "end") := NULL]
-  
-  scale_data <- data.frame(value = 1L, name = factor(c("> 0.05", "0.05 - 0.005", "0.005 - 0.0005", "< 0.0005"), levels = c("< 0.0005", "0.005 - 0.0005", "0.05 - 0.005", "> 0.05")))
-  scalebar <- ggplot(scale_data, aes(x = value, y = name)) +
-    geom_tile(aes(fill = name)) +
-    scale_fill_manual(name = "p-values", values = c("> 0.05" = "#2b8cbe", "0.05 - 0.005" = "#fee8c8", "0.005 - 0.0005" = "#fdbb84", "< 0.0005" = "#e34a33"))
-  
+
+  if(plotKey){  
+    scale_data <- data.frame(value = 1L, name = factor(c("> 0.05", "0.05 - 0.005", "0.005 - 0.0005", "< 0.0005"), levels = c("< 0.0005", "0.005 - 0.0005", "0.05 - 0.005", "> 0.05")))
+    scalebar <- ggplot(scale_data, aes(x = value, y = name)) +
+      geom_tile(aes(fill = name)) +
+      scale_fill_manual(name = "p-values", values = c("> 0.05" = "#2b8cbe", "0.05 - 0.005" = "#fee8c8", "0.005 - 0.0005" = "#fdbb84", "< 0.0005" = "#e34a33"))
+  }
+      
   for (i in 1:nrow(chroms_bait))
   {  
     count_temp <- countput_coord[baitID == chroms_bait[i][,baitID]]
@@ -1850,11 +1853,21 @@ plotDiffBaits <- function(output, countput, baitmapfile, baits = NULL,
     
     p1 <- ggplot(count_temp[condition == conditions[[1]]], aes(oeID_mid, Nav)) +
       geom_point(aes(colour=big_score, alpha = 0.4, stroke = 0)) + 
-      scale_colour_manual(values = c(bgCol, lev2Col, lev1Col)) +
-      geom_line(aes(oeID_mid, Bav)) +
+      scale_colour_manual(values = c(bgCol, lev2Col, lev1Col)) 
+    
+    if (plotBmean){
+      p1 <- p1 + geom_line(aes(oeID_mid, Bav))
+    }
+    
+    p1 <- p1 + 
       xlim(xlimit[[1]], xlimit[[2]]) +
       ylim(0, ylim_max) +
-      theme(legend.position = "none",
+      theme(panel.background = element_rect(fill = "white", 
+                                        colour = NA),
+            panel.grid = element_line(colour = "grey87"), 
+            panel.grid.major = element_line(size = rel(0.5)), 
+            panel.grid.minor = element_line(size = rel(0.25)), 
+            legend.position = "none",
             axis.text.x = element_text(size = 8),
             axis.text.y = element_text(size = 8),
             axis.title.x = element_blank(),
@@ -1873,11 +1886,22 @@ plotDiffBaits <- function(output, countput, baitmapfile, baits = NULL,
     
     p2 <- ggplot(count_temp[condition == conditions[[2]]], aes(oeID_mid, Nav)) +
       geom_point(aes(colour=big_score, alpha = 0.4, stroke = 0)) + 
-      scale_colour_manual(values = c(bgCol, lev2Col, lev1Col)) +
-      geom_line(aes(oeID_mid, Bav)) +
-      #     xlim(xlim[[1]], xlim[[2]]) +
+      scale_colour_manual(values = c(bgCol, lev2Col, lev1Col)) 
+    
+    if(plotBmean){
+      p2 <- p2 + geom_line(aes(oeID_mid, Bav))
+    }
+
+    
+    p2 <- p2 +       #     xlim(xlim[[1]], xlim[[2]]) +
       scale_y_reverse(limits = c(ylim_max, 0)) +
-      theme(legend.position = "none",
+      theme(
+            panel.background = element_rect(fill = "white", 
+                                      colour = NA),
+            panel.grid = element_line(colour = "grey87"), 
+            panel.grid.major = element_line(size = rel(0.5)), 
+            panel.grid.minor = element_line(size = rel(0.25)), 
+            legend.position = "none",
             axis.text.x = element_text(size = 8),
             axis.text.y = element_text(size = 8),
             axis.title.x = element_text(size = 8),
@@ -1916,8 +1940,12 @@ plotDiffBaits <- function(output, countput, baitmapfile, baits = NULL,
   }
   
   suppressWarnings(chicdiffPlots <- plot_grid(plotlist = plot_list, align = "h"))
-  suppressWarnings(scalebar_grid <- plot_grid(get_legend(scalebar)))
-  suppressWarnings(plot_grid(chicdiffPlots, scalebar_grid, rel_widths = c(10, 1), ...))
+  if (plotKey){
+      suppressWarnings(scalebar_grid <- plot_grid(get_legend(scalebar)))
+      suppressWarnings(plot_grid(chicdiffPlots, scalebar_grid, rel_widths = c(10, 1), ...))
+  }else{
+      suppressWarnings(plot_grid(chicdiffPlots, rel_widths = c(10, 1), ...))
+  }
 }
 
 #---------------------------------------------------#
