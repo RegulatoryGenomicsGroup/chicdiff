@@ -1876,17 +1876,18 @@ plotDiffBaits <- function(output, countput, baitmapfile, baits = NULL,
       ylab("N")
     
     if(plotBaitNames & plotBaitIDs){
-      p1 <- p1 + ggtitle(paste0(strsplit(strsplit(chroms_bait[i][,name], ",")[[1]], "-")[[1]], " (", chroms_bait[i][,baitID], ")"))
+      p1 <- p1 + ggtitle(paste0(strsplit(strsplit(chroms_bait[i][,name], ",")[[1]], "-")[[1]], " (", chroms_bait[i][,baitID], ")"), subtitle = conditions[[1]]) + theme(plot.subtitle = element_text(hjust = 1))
     }else if(plotBaitNames){
-      p1 <- p1 + ggtitle(strsplit(strsplit(chroms_bait[i][,name], ",")[[1]], "-")[[1]])
+      p1 <- p1 + ggtitle(lstrsplit(strsplit(chroms_bait[i][,name], ",")[[1]], "-")[[1]], subtitle = conditions[[1]]) + theme(plot.subtitle = element_text(hjust = 1))
     } else if(plotBaitIDs){
-      p1 <- p1 + ggtitle(chroms_bait[i][,baitID])
+      p1 <- p1 + ggtitle(chroms_bait[i][,baitID], subtitle = conditions[[1]]) + theme(plot.subtitle = element_text(hjust = 1))
     }
-    
     
     p2 <- ggplot(count_temp[condition == conditions[[2]]], aes(oeID_mid, Nav)) +
       geom_point(aes(colour=big_score, alpha = 0.4, stroke = 0)) + 
-      scale_colour_manual(values = c(bgCol, lev2Col, lev1Col)) 
+      scale_colour_manual(values = c(bgCol, lev2Col, lev1Col)) + 
+      labs(caption = conditions[[2]]) + 
+      theme(plot.caption = element_text(hjust = 1))
     
     if(plotBmean){
       p2 <- p2 + geom_line(aes(oeID_mid, Bav))
