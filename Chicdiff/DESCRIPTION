@@ -7,7 +7,7 @@ Maintainer: Mikhail Spivakov <mikhail.spivakov@lms.mrc.ac.uk>
 Description: A pipeline for differential analysis of Capture Hi-C data
 License: Artistic-2.0
 Depends: R (>= 3.4.0), data.table
-Imports: DESeq2, Chicago, IRanges, ggplot2, cowplot, hexbin, png, harmonicmeanp, S4Vectors 
+Imports: DESeq2, Chicago, IHW, IRanges, ggplot2, cowplot, hexbin, png, harmonicmeanp, S4Vectors 
 Suggests: argparser, testthat, BiocStyle, knitr, rmarkdown, ChicdiffData 
 VignetteBuilder: knitr
 LazyData: true
