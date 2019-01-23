@@ -1,7 +1,7 @@
 ---
 title: "Chicdiff Vignette"
 author: "Jonathan Cairns, William Orchard, Valeriya Malysheva, Mikhail Spivakov"
-date: 29 December, 2018
+date: 23 January, 2019
 VignetteIndexEntry: 
 output:
   BiocStyle::html_document:
@@ -23,9 +23,9 @@ BiocStyle::markdown()
 
 Chicdiff is a method for detecting statistically significant differential interactions in Capture Hi-C data. This vignette will walk you through a typical Chicdiff analysis. 
 
-The methodology behind Chicdiff is presented in [this preprint](https://doi.org/10.1101/526269). Briefly, Chicdiff combines moderated differential testing for count data implemented in DESeq2 with CHi-C-specific procedures for signal normalisation and p-value weighting. To increase power, Chicdiff combines reads across several fragments surrounding each significantly interacting region for each bait. Background estimates from Chicago are used to construct a custom scaling matrix that is used in differential testing. The count and scaling matrices are provided as input for the DESeq2 package that tests each interaction for differences between conditions using a negative binomial model with moderated dispersion estimation. DESeq2 implements both pairwise testing between conditions, as well as likelihood ratio tests for multi-condition differences. The p-values from either of these tests are then submitted to the weighting procedure as described below. 
+The methodology behind Chicdiff is presented in [this preprint](https://doi.org/10.1101/526269). Briefly, Chicdiff combines moderated differential testing for count data implemented in DESeq2 with CHi-C-specific procedures for signal normalisation and p-value weighting. To increase power, Chicdiff also combines reads across several fragments surrounding each significantly interacting region for each bait. More specifically, Chicdiff uses background estimates from Chicago to construct a custom scaling matrix that is used in differential testing with DESeq2, and the Wald test p-values from DESeq2 are submitted to the weighting procedure as described below. 
 
-Due to strong distance-dependent variation of signal-to-noise ratios and effect sizes in CHi-C data, Chicdiff performs non-uniform multiple testing correction, such that weaker signals at longer distances are corrected more vigorously. We use IHW to learn the weights on the p-values obtained from a differential testing of fragment pairs in a 'training set' that is sampled from the full count data for each sample. We use interaction distance bins as covariates to assign weights to each distance bin in a manner that maximises the overall fraction of rejected null hypotheses. The distance-dependent weights learned this way are applied to the p-values in the test set, and the resulting weighted p-values are reported to the user.
+Due to strong distance-dependent variation of signal-to-noise ratios and effect sizes in CHi-C data, Chicdiff performs non-uniform multiple testing correction, such that weaker signals at longer distances are corrected more vigorously. It uses the IHW package to learn the weights on the p-values using interaction distance as a covariate such that the overall fraction of rejected null hypotheses is maximised. Since sets of interactions submitted for Chicdiff testing typically have non-uniform Chicdiff p-value distributions due to selection bias, interactions from a 'training set' sampled from the entire Capture Hi-C dataset are used for weight training.  The weights learned this way then are applied to the p-values in the test set, and the resulting weighted p-values are adjusted for multiple testing and reported to the user.
 
 In this vignette, we use a small subset of the Capture Hi-C data for naive CD4+ T cells and Monocytes data from Javierre et al. (Cell 2016) provided in package *ChicdiffData*:
 
@@ -39,7 +39,7 @@ library(ChicdiffData)
 
 ---------------------------------------------------------------
 
-The example dataset from *ChicdiffData* uses ~0.6 Gb RAM and takes minutes to process on a standard laptop machine. A typical job for two biological replicates of genome-wide CHi-C data in each condition takes ~30-60 min and uses ~10-15 Gb RAM. Dense datasets with more replicates will take even longer to process and use more RAM. 
+The example dataset from *ChicdiffData* uses ~0.6 Gb RAM and takes minutes to process on a standard laptop machine. A typical job for two biological replicates of genome-wide CHi-C data in each condition takes ~30-60 min and uses ~10-15 Gb RAM. High-coverage datasets with more replicates will take even longer to process and use more RAM. 
 
 # Workflow
 
@@ -52,7 +52,7 @@ Before you start, you will need:
 - Restriction map file (.rmap) - a bed file containing coordinates of the restriction fragments. By default, 4 columns: chr, start, end, fragmentID.
 - Bait map file (.baitmap) - a bed file containing coordinates of the baited restriction fragments, and their associated annotations. By default, 5 columns: chr, start, end, fragmentID, baitAnnotation. The regions specified in this file, including their fragmentIDs, must be an exact subset of those in the .rmap file. The baitAnnotation is a text field that is used only to annotate the output and plots.
 
-We recommend that you put all five of these files into the same directory (that we refer to as designDir). An example of a valid design folder, for a sample of the CD4+ and Monocytes data used in this vignette, is provided in the ChicdiffData package, and can be accessed follows.
+We recommend that you put both of these files into the same directory (that is referred to as designDir). An example of a valid design folder, for a sample of the CD4+ and Monocytes data used in this vignette, is provided in the ChicdiffData package, and can be accessed as follows.
 
 ```{r}
 dataPath <- system.file("extdata", package="ChicdiffData")
@@ -158,7 +158,7 @@ OPTIONAL: You can modify settings directly in the command line (see ```?defaultC
 chicdiff.settings <- setChicdiffExperiment(designDir = testDesignDir, chicagoData = chicagoData, countData = countData, peakfiles = peakFiles, outprefix="test", settings = list(parallel=TRUE))
 ```
 
-Alternatively, you can provide your prefered parameters in a *settingsFile*:
+Alternatively, you can provide custom parameters in a *settingsFile*:
 
 ```{r, eval=FALSE}
 settingsFile = file.path(dataPath,"SettingsFile.txt")
@@ -166,7 +166,7 @@ chicdiff.settings <- setChicdiffExperiment(designDir = testDesignDir, chicagoDat
 ```
 
 ------ ---------------------------------------------------------
-*NOTE* Settings override settings from settingsFile. Both override default settings.
+*NOTE* Settings provided this way override settings from settingsFile. Both override default settings.
 
 ---------------------------------------------------------------
 
@@ -181,7 +181,7 @@ resultsPath <- file.path(dataPath, "CD4_Mono_results")
 output <- readRDS(file.path(resultsPath, "test_results.Rds"))
 ```
 
-The pipeline will define extended regions based on the ```RUextend``` option (by default, 5 fragments each way from each interaction peak at the other end of the bated interactions), tune the scaling factor based on minimising the total variance between replicates and conditions, normalise the data and submit them for differential testing by DESeq2. It will then perform the same procedures for randomly sampled 'control' interactions to estimate the p-value weighting function, and apply the weights to the p-values in the test set.
+The pipeline will define extended regions based on the ```RUextend``` option (by default, 5 fragments each way from each interaction peak at the other end of the bated interactions), perform normalisation, differential testing, weights estimation based on the 'test set' and p-value weighting and multiple testing correction.
 
 For each bait-region interaction, the output data table lists the log2FoldChange of normalised interaction read counts, along with raw, weighted, and weighted adjusted p-values (```pvalue```, ```weighted_pvalue``` and ```weighted_padj```, respectively).
 
@@ -191,15 +191,11 @@ head(output)
 
 ```
 
-```chicdiffPipeline``` will return the final dataset, as well as save it as an Rds file <outprefix>_results.Rds. In addition, it will save the final count table along with Chicago parameter estimates in the Rds file *<outprefix>_countput.Rds*. Further output files can be generated with the setting ```saveAuxFiles=TRUE``` - see the ```?chicdiffpipeline``` for details.
-
+In addition to returning the output data table, ```chicdiffPipeline``` will  save it as an Rds file <outprefix>_results.Rds. It will also save the final count table along with Chicago parameter estimates for each interaction in the Rds file *<outprefix>_countput.Rds*. Further output files can be generated with the setting ```saveAuxFiles=TRUE``` - see the ```?chicdiffpipeline``` for details.
 
 ## Output diagnostic plots 
 
-``chicdiffPipeline()`` produces several plots that are saved in the working directory.
-
-The plots produced by Chicdiff for the chr19 datasets are provided as part of the *ChicdiffData* package.
-Note that the diagnostic plots presented here were computed using only a small fraction of the full CD4 and Monocyte datasets. With the real-world genome-wide data, the trends described below should be more pronounced. 
+``chicdiffPipeline()`` produces several plots that are saved in the working directory. The plots produced for the chr19 datasets are provided as part of the *ChicdiffData* package. Note that with genome-wide data, the trends described below should be more pronounced. 
 
 ### Decision boundary
 
@@ -210,7 +206,7 @@ IHWdecisionBoundaryPlot <- png::readPNG(file.path(resultsPath,"test_IHWdecisionB
 grid::grid.raster(IHWdecisionBoundaryPlot)
 ```
  
-This plot shows the implied decision boundaries for the unweighted p-values, as a function of the covariate. It shows whether the covariate (distance) in the control dataset is informative of the power under the alternative. The trend is for low p-values to be enriched at low distances.
+This plot shows the implied decision boundaries for the unweighted p-values, as a function of the covariate. The dependence of the boundaries on the covariate (distance) demonstrates that this covariate is informative. The trend is for low p-values to be enriched at low distances.
 
 ### Estimated weights
 
@@ -219,20 +215,20 @@ IHWweightPlot <- png::readPNG(file.path(resultsPath,"test_IHWweightPlot.png"))
 grid::grid.raster(IHWweightPlot)
 ```
 
-We see that the general trend is driven by distance (stratum). As expected, the weight functions calculated on different random subsets (folds) of the data behave similarly. For the chr19 data at hand, interactions acros longer distances get penalized and are assigned with a lower weight, while interactions over shorter distances get prioritized.
+It can be seen from this plot that the weights show a dependence on distance (stratum). As expected, the weight functions calculated on different random subsets (folds) of the data behave similarly. For the chr19 data at hand, interactions across longer distances get penalized and are assigned with a lower weight, while interactions over shorter distances are prioritized.
 
 # Vizualising differential interactions
 
-The ```plotdiffBaits()``` function can be used to plot the raw read counts versus linear distance from bait, mirrored for compared conditions. Significant Interactions are represented as intervals, labelled in a different colour, according to the attributed weighted pvalue.
+The ```plotdiffBaits()``` function can be used to plot the raw read counts of interactions versus their linear distance from the respective bait fragment, as mirror images for the two compared conditions. The extended regions corresponding to the other ends of significant interactions are represented as intervals that are colour-coded according to their adjusted weighted pvalue.
 
-By default Chicdiff produces a plot showing four random baits from the top 100 baits, containing interactions with the lowest weighted pvalue. Interactions within 1 Mb from bait are shown, with those passing the threshold of 5 colored in red and those passing the more lenient threshold of 3 shown in blue. Those interactions that are passing the threshold of 5 go through the Chicdiff pipeline. To gain the statistical power the otherEnd under evaluation will be expanded to an interval, which will be compared between conditions. Thus the weighted pvalue correpsonds not to an individual interaction but to an interaction of bait with an interval and is the result of several interactions withing that interval.
+Chicdiff pipeline automatically invokes ```plotdiffBaits()``` to generate the profiles for four random baits selected from the top 100 baits containing interactions with the lowest weighted p-value. Interactions within 1 Mb from bait are shown, and the datapoints on the plot are colour-coded according to the Chicago score of the respective interactions detected in each of the conditions separately (score>5: red; 3<score<=5: blue). Note that in this example, only interactions exceeding a score of 5 were submitted to the Chicdiff pipeline. 
 
 ```{r}
 IHWweightPlot <- png::readPNG(file.path(resultsPath,"test_diffbaitPlot.png"))
 grid::grid.raster(IHWweightPlot)
 ```
 
-To plot the profiles of specific baits of interest using ```plotDiffBaits()```, it needs to be provided with the output data table (saved in test_results.Rds by ```chicdiffPipeline```, assuming that ```outprefix="test"``` by default), count table (saved in test_countput.Rds), baitmap file (from *Chicago* design directory) and a vector of baitIDs of interest (see ```?plotDiffBaits``` for the description of additional parameters).
+To use ```plotDiffBaits()``` outside of the pipeline to plot the profiles of baits of interest, it needs to be provided with the output data table (saved in test_results.Rds by ```chicdiffPipeline```, assuming that ```outprefix="test"``` by default), count table (saved in test_countput.Rds), baitmap file (from *Chicago* design directory) and a vector of baitIDs of interest (see ```?plotDiffBaits``` for the description of additional parameters).
 
 ```{r}
 
@@ -249,9 +245,9 @@ plotDiffBaits(outputRds, countputRds, bmapRds, baits)
 
 Unless the ```RUexpand``` setting is set to zero, Chicdiff works at the level of interactions between baits and pooled regions, containing multiple restriction fragments.
 
-To obtain indications of differential signals at individual fragments, Chicdiff provides the function  ```getCandidateInteractions()```. For fragments falling within multiple pooled regions, their differential p-values are combined using either by taking the minimum (default) or, more formally, with the harmonic mean method for dependent tests implemented in package ```harmonicmeanp```. This is determined by the ```method``` parameter. It is possible to specify the maximum p-value cutoff (```pvcut```) for filtering the output. 
+To obtain indications of differential signals at individual fragments, Chicdiff provides the function  ```getCandidateInteractions()```. For fragments falling within multiple pooled regions, this function combines their differential p-values by either taking the minimum (default) or, more formally, using the harmonic mean method for dependent tests implemented in package ```harmonicmeanp```, as determined by the ```method``` parameter. It is also possible to specify the maximum p-value cutoff (```pvcut```) for filtering the output. 
 
-In order to prioritise putative 'driver' interactions within the differentially interacting regions, ```getCandidateInteractions``` enables filtering them by minimum |asinh (Chicago score)| (```deltaAsinhScore```) between conditions. The asinh transformation helps compress the upper range of the scores, where the differences are less interpretable tn   
+In order to prioritise putative 'driver' interactions within the differentially interacting regions, ```getCandidateInteractions``` enables filtering them by minimum |\Delta asinh (Chicago score)| (```deltaAsinhScore```) between conditions. The asinh transformation helps compress the upper range of the scores, where differences between them are less interpretable compared with those in the lower range.   
 
 ```{r}
 outCI <- getCandidateInteractions(chicdiff.settings = chicdiff.settings, 
