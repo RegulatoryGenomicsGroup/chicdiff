@@ -4,7 +4,7 @@ Chicdiff is a pipeline for identifying differential Capture Hi-C interactions be
 
 Chicdiff takes advantage of Capture Hi-C parameters learned by the Chicago pipeline, and requires that the data for each replicate of each condition be processed by Chicago first. Please refer to the [Chicago bitbucket page](http://www.bitbucket.org/chicagoTeam/chicago) for details on using this pipeline.
 
-A preprint describing Chicdiff will be released very shortly.
+A preprint describing Chicdiff is [available on bioRxiv](https://doi.org/10.1101/526269).
 
 This repository contains the following folders:
 
@@ -36,6 +36,7 @@ install_github("RegulatoryGenomicsGroup/chicdiff", subdir="ChicdiffData", force=
 This strategy downloads the repository multiple times. To avoid this, you can clone the github repo to a local folder and then install both packages using ``devtools::install(<path-to-package>)``.
 
 If you encounter any problems, please [post an issue](https://github.com/RegulatoryGenomicsGroup/chicdiff/issues) or email the developers. In the email, include output from the R command ``sessionInfo()``, along with any error messages encountered.
+
 
 *Contact information*
 
