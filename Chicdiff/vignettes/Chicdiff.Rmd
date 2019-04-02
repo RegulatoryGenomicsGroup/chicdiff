@@ -247,12 +247,12 @@ Unless the ```RUexpand``` setting is set to zero, Chicdiff works at the level of
 
 To obtain indications of differential signals at individual fragments, Chicdiff provides the function  ```getCandidateInteractions()```. For fragments falling within multiple pooled regions, this function combines their differential p-values by either taking the minimum (default) or, more formally, using the harmonic mean method for dependent tests implemented in package ```harmonicmeanp```, as determined by the ```method``` parameter. It is also possible to specify the maximum p-value cutoff (```pvcut```) for filtering the output. 
 
-In order to prioritise putative 'driver' interactions within the differentially interacting regions, ```getCandidateInteractions``` enables filtering them by minimum |\Delta asinh (Chicago score)| (```deltaAsinhScore```) between conditions. The asinh transformation helps compress the upper range of the scores, where differences between them are less interpretable compared with those in the lower range.   
+In order to prioritise putative 'driver' interactions within the differentially interacting regions, ```getCandidateInteractions``` enables filtering them by minimum |\Delta asinh (Chicago score)| (```minDeltaAsinhScore```) between conditions. The asinh transformation helps compress the upper range of the scores, where differences between them are less interpretable compared with those in the lower range.   
 
 ```{r}
 outCI <- getCandidateInteractions(chicdiff.settings = chicdiff.settings, 
                     output = output, peakFiles = peakFiles, 
-                    pvcut = 0.05, deltaAsinhScore = 1)
+                    pvcut = 0.05, minDeltaAsinhScore = 1)
 
 head(outCI)
 ```

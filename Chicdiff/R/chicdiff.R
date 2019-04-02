@@ -2073,7 +2073,7 @@ getCandidateInteractions <- function(output, peakFiles,
                                      chicdiff.settings, 
                                      pcol = "weighted_padj",
                                      method = c("min", "hmp")[1], 
-                                     deltaAsinhScore=1,                                      
+                                     minDeltaAsinhScore=1,                                      
                                      pvcut = 0.05){
   
   chicagoData = chicdiff.settings[["chicagoData"]]
@@ -2149,7 +2149,6 @@ getCandidateInteractions <- function(output, peakFiles,
   setkey(outpeak, baitID, oeID)
   final <- outpeak[, eval(parse(text=expr)),  by=c("baitID", "oeID")]
   
-  final[get(pcol_out) <= pvcut]
-  
+  final[get(pcol_out) <= pvcut & deltaAsinhScore >= minDeltaAsinhScore]
   
 }
