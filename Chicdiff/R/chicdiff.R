@@ -2077,8 +2077,21 @@ getCandidateInteractions <- function(output, peakFiles,
                                      pvcut = 0.05){
   
   chicagoData = chicdiff.settings[["chicagoData"]]
+  score <- chicdiff.settings[["score"]]
+  targetColumns = chicdiff.settings[["targetColumns"]]
   peakFiles <- fread(peakFiles)
   
+  sel <- which(colnames(peakFiles) %in% targetColumns)
+  peakFiles <- peakFiles[,c(1:11, sel), with=FALSE] # assumes the standard peakFiles format where condition-specific Chicago scores start from col 12
+  sel <- rep(FALSE, nrow(peakFiles))
+  for(cl in targetColumns)
+  {
+     sel <- sel | peakFiles[,get(cl) > score & !is.na(get(cl))] ##Get any rows where at least one score > 5.
+  }
+  peakFiles <- peakFiles[sel,]
+    
+    
+    
   if(is.character(output)){
     output <- readRDS(output)
   }
