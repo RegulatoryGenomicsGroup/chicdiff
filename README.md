@@ -17,9 +17,7 @@ Please refer to the Chicdiff R package vignette for more information.
 
 1. Make sure that you have R version >= 3.4.0. 
 
-2. Download the chicagoTools/runChicdiff.R script from the repository.
-
-3. Install the R packages. An easy way to do this is by using functionality in devtools - run the following R code:
+2. Install the R packages. An easy way to do this is by using functionality in devtools - run the following R code:
 
 ```{r}
 install.packages("devtools")
