@@ -1879,9 +1879,9 @@ plotDiffBaits <- function(output, countput, baitmapfile, baits = NULL,
       ylab("N")
     
     if(plotBaitNames & plotBaitIDs){
-      p1 <- p1 + ggtitle(paste0(strsplit(strsplit(chroms_bait[i][,name], ",")[[1]], "-")[[1]], " (", chroms_bait[i][,baitID], ")"), subtitle = conditions[[1]]) + theme(plot.subtitle = element_text(hjust = 1))
+      p1 <- p1 + ggtitle(paste0(strsplit(strsplit(as.character(chroms_bait[i][,name]), ",")[[1]], "-")[[1]], " (", chroms_bait[i][,baitID], ")"), subtitle = conditions[[1]]) + theme(plot.subtitle = element_text(hjust = 1))
     }else if(plotBaitNames){
-      p1 <- p1 + ggtitle(strsplit(strsplit(chroms_bait[i][,name], ",")[[1]], "-")[[1]], subtitle = conditions[[1]]) + theme(plot.subtitle = element_text(hjust = 1))
+      p1 <- p1 + ggtitle(strsplit(strsplit(as.character(chroms_bait[i][,name]), ",")[[1]], "-")[[1]], subtitle = conditions[[1]]) + theme(plot.subtitle = element_text(hjust = 1))
     } else if(plotBaitIDs){
       p1 <- p1 + ggtitle(chroms_bait[i][,baitID], subtitle = conditions[[1]]) + theme(plot.subtitle = element_text(hjust = 1))
     }

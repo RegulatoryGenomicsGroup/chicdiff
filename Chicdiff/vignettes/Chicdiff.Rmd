@@ -191,7 +191,7 @@ head(output)
 
 ```
 
-In addition to returning the output data table, ```chicdiffPipeline``` will  save it as an Rds file <outprefix>_results.Rds. It will also save the final count table along with Chicago parameter estimates for each interaction in the Rds file *<outprefix>_countput.Rds*. Further output files can be generated with the setting ```saveAuxFiles=TRUE``` - see the ```?chicdiffpipeline``` for details.
+In addition to returning the output data table, ```chicdiffPipeline``` will  save it as an Rds file <outprefix>_results.Rds. It will also save the final count table along with Chicago parameter estimates for each interaction in the Rds file *<outprefix>_countput.Rds*. Further output files can be generated with the setting ```saveAuxData=TRUE``` - see the ```?chicdiffpipeline``` for details.
 
 ## Output diagnostic plots 
 
