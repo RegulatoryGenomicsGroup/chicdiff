@@ -2057,12 +2057,7 @@ IHWcorrection <- function(chicdiff.settings, DESeqOut, FullRegionData, DESeqOutC
     sel <- order(out$weighted_padj)
     baits <- sample(head(unique(out[sel]$baitID), 100), 4)
     plotDiffBaits(output = out, countput = countput, baitmapfile = baitmapfile, baits = baits)
-    if (exists("ggsave", where="package:cowplot")){
-    cowplot::ggsave(paste0(outprefix, "_diffbaitPlot",".",device), device = device, path = "./")
-    }
-    else{
     cowplot::ggsave2(paste0(outprefix, "_diffbaitPlot",".",device), device = device, path = "./") 
-    }
     dev.off()
   }
   
