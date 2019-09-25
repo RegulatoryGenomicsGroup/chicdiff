@@ -2000,11 +2000,9 @@ IHWcorrection <- function(chicdiff.settings, DESeqOut, FullRegionData, DESeqOutC
   
   if(DiagPlot == TRUE){
     plot(ihwRes)
-    cowplot::ggsave(paste0(outprefix, "_IHWweightPlot.png"), device = "png", path = "./")
-    dev.off()
+    ggsave(paste0(outprefix, "_IHWweightPlot.png"), device = "png", path = "./")
     plot(ihwRes, what = "decisionboundary")
-    cowplot::ggsave(paste0(outprefix, "_IHWdecisionBoundaryPlot.png"), device = "png", path = "./")
-    dev.off()
+    ggsave(paste0(outprefix, "_IHWdecisionBoundaryPlot.png"), device = "png", path = "./")
   }
   
   
@@ -2059,7 +2057,12 @@ IHWcorrection <- function(chicdiff.settings, DESeqOut, FullRegionData, DESeqOutC
     sel <- order(out$weighted_padj)
     baits <- sample(head(unique(out[sel]$baitID), 100), 4)
     plotDiffBaits(output = out, countput = countput, baitmapfile = baitmapfile, baits = baits)
+    if (exists("ggsave", where="package:cowplot")){
     cowplot::ggsave(paste0(outprefix, "_diffbaitPlot",".",device), device = device, path = "./")
+    }
+    else{
+    cowplot::ggsave2(paste0(outprefix, "_diffbaitPlot",".",device), device = device, path = "./") 
+    }
     dev.off()
   }
   
