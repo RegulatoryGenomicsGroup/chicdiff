@@ -4,7 +4,8 @@ Chicdiff is a pipeline for identifying differential Capture Hi-C interactions be
 
 Chicdiff takes advantage of Capture Hi-C parameters learned by the Chicago pipeline, and requires that the data for each replicate of each condition be processed by Chicago first. Please refer to the [Chicago bitbucket page](http://www.bitbucket.org/chicagoTeam/chicago) for details on using this pipeline.
 
-A preprint describing Chicdiff is [available on bioRxiv](https://doi.org/10.1101/526269).
+A paper describing Chicdiff is [available here](https://doi.org/10.1093/bioinformatics/btz450): Cairns / Orchard / Malysheva & Spivakov. Chicdiff: a computational pipeline for detecting differential chromosomal interactions in Capture Hi-C data. Bioinformatics. 2019. AOP: btz450.
+
 
 This repository contains the following folders:
 
