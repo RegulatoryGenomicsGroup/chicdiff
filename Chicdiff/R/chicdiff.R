@@ -223,9 +223,7 @@ setChicdiffExperiment = function(designDir="", chicagoData = NA, countData = NA,
           by=c("baitChr","baitStart","baitEnd","baitID",         
                "baitName","oeChr","oeStart","oeEnd",          
                "oeID","oeName","dist"), all=T), peakDTs)
-  for(tc in targetColumns){
-    peakMatrix[is.na(get(tc)), c(tc):=0]
-  }
+  
   peakMatrix
 }
 
@@ -233,7 +231,7 @@ readAndFilterPeakMatrix <- function(peakFiles, targetColumns, chicagoData, condi
   ## Essentially reads in the peak matrix, taking the target columns if specified (else just takes everything) and filters for rows where at least
   ##one score is > 5 (or whatever is specified) and filters out trans interactions. 
   
-  if(length(peakFiles > 1)){
+  if(length(peakFiles) > 1){
     x <- .multimerge(peakFiles, targetColumns)
   } else {
     x <- fread(peakFiles)
