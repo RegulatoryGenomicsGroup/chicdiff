@@ -1924,7 +1924,7 @@ plotDiffBaits <- function(output, countput, baitmapfile, baits = NULL,
     merged_dat[,width := NULL]
     merged_dat[,minuslogpvalue := -log10(get(pcol))]
     
-    merged_dat[minuslogpvalue <= -log(0.05), pvalue_param := "blue"]
+    merged_dat[minuslogpvalue <= -log10(0.05), pvalue_param := "blue"]
     merged_dat[minuslogpvalue <= -log10(0.005) & minuslogpvalue > -log10(0.05), pvalue_param := "light red"]
     merged_dat[minuslogpvalue <= -log10(0.0005) & minuslogpvalue > -log10(0.005), pvalue_param := "mid red"]
     merged_dat[is.na(pvalue_param), pvalue_param := "red"]
